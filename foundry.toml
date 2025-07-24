@@ -1,0 +1,81 @@
+[profile.default]
+# Foundry configuration for Quest dApp on Etherlink
+src = "Smart Contracts/src"
+out = "out"
+libs = ["lib"]
+cache_path = "cache"
+test = "Smart Contracts/test"
+script = "Smart Contracts/script"
+
+# Solidity compiler settings
+solc_version = "0.8.24"
+optimizer = true
+optimizer_runs = 1000
+via_ir = true
+
+# EVM version for Etherlink compatibility  
+evm_version = "paris"
+
+# Remappings for dependencies
+remappings = [
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "forge-std/=lib/forge-std/src/",
+    "ds-test/=lib/ds-test/src/",
+]
+
+# Gas limit and reporting
+gas_limit = "30000000"
+gas_reports = ["*"]
+
+# Test configuration
+verbosity = 2
+ffi = false
+fs_permissions = [
+    { access = "read-write", path = "./deployments/" },
+    { access = "read", path = "./" },
+]
+
+# Coverage settings
+coverage = true
+coverage_debug_mode = false
+
+# CI/Testing configuration
+[profile.ci]
+fuzz_runs = 1000
+invariant_runs = 100
+
+# Production deployment profile
+[profile.production]
+optimizer = true
+optimizer_runs = 10000
+via_ir = true
+
+# Etherlink network configurations
+[rpc_endpoints]
+etherlink = "https://node.mainnet.etherlink.com"
+etherlink_testnet = "https://node.ghostnet.etherlink.com"
+anvil = "http://127.0.0.1:8545"
+
+[etherscan]
+etherlink = { key = "${ETHERSCAN_API_KEY}", url = "https://explorer.etherlink.com/" }
+etherlink_testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://testnet.explorer.etherlink.com/" }
+
+
+# Security and best practices
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = true
+int_types = "long"
+
+[doc]
+out = "docs"
+title = "Quest dApp Documentation"
+repository = "https://github.com/your-username/quest-dapp"
+
+# Deployment artifact handling
+[profile.broadcast]
+verify = true
+delay = "30s"
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
