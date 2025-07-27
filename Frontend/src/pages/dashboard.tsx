@@ -8,6 +8,7 @@ import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
 import { UserIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 // Dynamically import components that use contracts to avoid SSR issues
 const UserDashboard = dynamic(() => import('../components/dashboard/UserDashboard'), {
@@ -117,7 +118,9 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      {isClient ? <UserDashboard /> : <LoadingSpinner />}
+                      <ErrorBoundary>
+                        {isClient ? <UserDashboard /> : <LoadingSpinner />}
+                      </ErrorBoundary>
                     </div>
                   </div>
 
@@ -132,7 +135,9 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      {isClient ? <SubmissionHistory /> : <LoadingSpinner />}
+                      <ErrorBoundary>
+                        {isClient ? <SubmissionHistory /> : <LoadingSpinner />}
+                      </ErrorBoundary>
                     </div>
                   </div>
 
@@ -147,7 +152,9 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      {isClient ? <NFTGallery /> : <LoadingSpinner />}
+                      <ErrorBoundary>
+                        {isClient ? <NFTGallery /> : <LoadingSpinner />}
+                      </ErrorBoundary>
                     </div>
                   </div>
                 </div>
@@ -165,7 +172,9 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      {isClient ? <StakesSummary /> : <LoadingSpinner />}
+                      <ErrorBoundary>
+                        {isClient ? <StakesSummary /> : <LoadingSpinner />}
+                      </ErrorBoundary>
                     </div>
                   </div>
 

@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
 import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 // Dynamically import components that use contracts to avoid SSR issues
 const StakingInterface = dynamic(() => import('../components/staking/StakingInterface'), {
@@ -91,7 +92,9 @@ export default function StakingPage() {
                   </p>
                 </div>
                 <div className="p-6">
-                  {isClient ? <StakingInterface /> : <LoadingSpinner />}
+                  <ErrorBoundary>
+                    {isClient ? <StakingInterface /> : <LoadingSpinner />}
+                  </ErrorBoundary>
                 </div>
               </div>
 
@@ -177,7 +180,9 @@ export default function StakingPage() {
                   </p>
                 </div>
                 <div className="p-6">
-                  {isClient ? <PoolStats /> : <LoadingSpinner />}
+                  <ErrorBoundary>
+                    {isClient ? <PoolStats /> : <LoadingSpinner />}
+                  </ErrorBoundary>
                 </div>
               </div>
 

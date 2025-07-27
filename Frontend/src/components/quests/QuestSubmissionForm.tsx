@@ -1,7 +1,7 @@
 'use client';
 
 // ============ Imports ============
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { 
   XMarkIcon,
@@ -40,6 +40,18 @@ export default function QuestSubmissionForm({
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [urlError, setUrlError] = useState('');
   const [step, setStep] = useState<'instructions' | 'submit'>('instructions');
+
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   // ============ URL Validation ============
   const validateTweetUrl = (url: string): { isValid: boolean; error: string } => {
@@ -118,8 +130,18 @@ export default function QuestSubmissionForm({
 
   // ============ JSX Return ============
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -132,8 +154,14 @@ export default function QuestSubmissionForm({
             </p>
           </div>
           <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-md transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            type="button"
+            aria-label="Close dialog"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>

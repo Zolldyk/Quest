@@ -101,21 +101,23 @@ export interface QuestBadge {
 // ============ Contract Addresses ============
 const getContractAddresses = () => {
   const addresses = {
-    stakingPool: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
-    questManager: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
-    nftMinter: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
-    usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+    stakingPool: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS || '',
+    questManager: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS || '',
+    nftMinter: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS || '',
+    usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '',
   };
 
-  // Validate all addresses exist
-  for (const [key, value] of Object.entries(addresses)) {
-    if (!value) {
-      console.error(`Missing environment variable: NEXT_PUBLIC_${key.toUpperCase()}_ADDRESS`);
-      throw new Error(`Missing environment variable for ${key}. Please check your .env.local file.`);
-    }
+  // Log missing addresses but don't throw errors
+  const missingAddresses = Object.entries(addresses)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingAddresses.length > 0) {
+    console.warn(`Missing contract addresses: ${missingAddresses.join(', ')}`);
+    console.warn('Some features may not work properly. Please check your environment variables.');
   }
 
-  return addresses as Record<keyof typeof addresses, string>;
+  return addresses;
 };
 
 // ============ Staking Pool Hooks ============
@@ -127,7 +129,7 @@ export function useStakingPool() {
   const { stakingPool } = getContractAddresses();
   
   // Contract instance
-  const { contract } = useContract(stakingPool, STAKING_POOL_ABI);
+  const { contract } = useContract(stakingPool || '', STAKING_POOL_ABI);
   
   // Read functions
   const { data: poolBalance, refetch: refetchPoolBalance } = useContractRead(
@@ -144,7 +146,7 @@ export function useStakingPool() {
   
   // Helper functions
   const getStakerInfo = useCallback(async (address: string): Promise<StakerInfo | null> => {
-    if (!contract || !address) return null;
+    if (!contract || !address || !stakingPool) return null;
     
     try {
       const result = await refetchPoolBalance(); // Use v5 pattern
@@ -160,10 +162,10 @@ export function useStakingPool() {
       console.error("Error fetching staker info:", error);
       return null;
     }
-  }, [contract, refetchPoolBalance]);
+  }, [contract, refetchPoolBalance, stakingPool]);
 
   const stakeTokens = useCallback(async (amount: bigint) => {
-    if (!contract) throw new Error("Contract not loaded");
+    if (!contract || !stakingPool) throw new Error("Contract not available or not configured");
     
     try {
       const tx = await stake([amount]);
@@ -178,10 +180,10 @@ export function useStakingPool() {
       toast.error(error?.message || "Failed to stake tokens");
       throw error;
     }
-  }, [contract, stake, refetchPoolBalance, refetchPoolStats]);
+  }, [contract, stake, refetchPoolBalance, refetchPoolStats, stakingPool]);
 
   const unstakeTokens = useCallback(async (amount: bigint) => {
-    if (!contract) throw new Error("Contract not loaded");
+    if (!contract || !stakingPool) throw new Error("Contract not available or not configured");
     
     try {
       const tx = await unstake([amount]);
@@ -196,7 +198,7 @@ export function useStakingPool() {
       toast.error(error?.message || "Failed to unstake tokens");
       throw error;
     }
-  }, [contract, unstake, refetchPoolBalance, refetchPoolStats]);
+  }, [contract, unstake, refetchPoolBalance, refetchPoolStats, stakingPool]);
 
   return {
     contract,
@@ -221,7 +223,7 @@ export function useQuestManager() {
   const { questManager } = getContractAddresses();
   
   // Contract instance
-  const { contract } = useContract(questManager, QUEST_MANAGER_ABI);
+  const { contract } = useContract(questManager || '', QUEST_MANAGER_ABI);
   
   // Read functions
   const { data: activeQuests, refetch: refetchActiveQuests } = useContractRead(
@@ -241,7 +243,7 @@ export function useQuestManager() {
 
   // Helper functions
   const getQuest = useCallback(async (questId: number): Promise<Quest | null> => {
-    if (!contract) return null;
+    if (!contract || !questManager) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -265,10 +267,10 @@ export function useQuestManager() {
       console.error("Error fetching quest:", error);
       return null;
     }
-  }, [contract, refetchActiveQuests]);
+  }, [contract, refetchActiveQuests, questManager]);
 
   const getSubmission = useCallback(async (submissionId: number): Promise<QuestSubmission | null> => {
-    if (!contract) return null;
+    if (!contract || !questManager) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -289,10 +291,10 @@ export function useQuestManager() {
       console.error("Error fetching submission:", error);
       return null;
     }
-  }, [contract, refetchPendingSubmissions]);
+  }, [contract, refetchPendingSubmissions, questManager]);
 
   const getPlayerSubmissions = useCallback(async (playerAddress: string): Promise<bigint[] | null> => {
-    if (!contract || !playerAddress) return null;
+    if (!contract || !playerAddress || !questManager) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -301,10 +303,10 @@ export function useQuestManager() {
       console.error("Error fetching player submissions:", error);
       return null;
     }
-  }, [contract]);
+  }, [contract, questManager]);
 
   const hasPlayerCompleted = useCallback(async (playerAddress: string, questId: number): Promise<boolean> => {
-    if (!contract || !playerAddress) return false;
+    if (!contract || !playerAddress || !questManager) return false;
     
     try {
       // In v5, you'd use the actual read function
@@ -313,10 +315,10 @@ export function useQuestManager() {
       console.error("Error checking quest completion:", error);
       return false;
     }
-  }, [contract]);
+  }, [contract, questManager]);
 
   const checkIsAdmin = useCallback(async (address: string): Promise<boolean> => {
-    if (!contract || !address) return false;
+    if (!contract || !address || !questManager) return false;
     
     try {
       // In v5, you'd use the actual read function
@@ -325,10 +327,10 @@ export function useQuestManager() {
       console.error("Error checking admin status:", error);
       return false;
     }
-  }, [contract]);
+  }, [contract, questManager]);
 
   const submitQuestProof = useCallback(async (questId: number, tweetUrl: string) => {
-    if (!contract) throw new Error("Contract not loaded");
+    if (!contract || !questManager) throw new Error("Contract not available or not configured");
     
     try {
       const tx = await submitQuest([questId, tweetUrl]);
@@ -343,14 +345,14 @@ export function useQuestManager() {
       toast.error(error?.message || "Failed to submit quest");
       throw error;
     }
-  }, [contract, submitQuest, refetchActiveQuests]);
+  }, [contract, submitQuest, refetchActiveQuests, questManager]);
 
   const verifyQuestSubmission = useCallback(async (
     submissionId: number, 
     approved: boolean, 
     rejectionReason: string = ""
   ) => {
-    if (!contract) throw new Error("Contract not loaded");
+    if (!contract || !questManager) throw new Error("Contract not available or not configured");
     
     try {
       const tx = await verifyQuest([submissionId, approved, rejectionReason]);
@@ -365,10 +367,10 @@ export function useQuestManager() {
       toast.error(error?.message || "Failed to verify quest");
       throw error;
     }
-  }, [contract, verifyQuest, refetchPendingSubmissions]);
+  }, [contract, verifyQuest, refetchPendingSubmissions, questManager]);
 
   const toggleQuestStatus = useCallback(async (questId: number) => {
-    if (!contract) throw new Error("Contract not loaded");
+    if (!contract || !questManager) throw new Error("Contract not available or not configured");
     
     try {
       const tx = await toggleStatus([questId]);
@@ -383,7 +385,7 @@ export function useQuestManager() {
       toast.error(error?.message || "Failed to toggle quest status");
       throw error;
     }
-  }, [contract, toggleStatus, refetchActiveQuests]);
+  }, [contract, toggleStatus, refetchActiveQuests, questManager]);
 
   return {
     contract,
@@ -415,14 +417,14 @@ export function useNFTMinter() {
   const { nftMinter } = getContractAddresses();
   
   // Contract instance
-  const { contract } = useContract(nftMinter, NFT_MINTER_ABI);
+  const { contract } = useContract(nftMinter || '', NFT_MINTER_ABI);
   
   // Read functions
   const { data: totalSupply } = useContractRead(contract, "totalSupply");
 
   // Helper functions
   const getUserBadges = useCallback(async (userAddress: string): Promise<bigint[] | null> => {
-    if (!contract || !userAddress) return null;
+    if (!contract || !userAddress || !nftMinter) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -431,10 +433,10 @@ export function useNFTMinter() {
       console.error("Error fetching user badges:", error);
       return null;
     }
-  }, [contract]);
+  }, [contract, nftMinter]);
 
   const getBadge = useCallback(async (tokenId: number): Promise<QuestBadge | null> => {
-    if (!contract) return null;
+    if (!contract || !nftMinter) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -451,10 +453,10 @@ export function useNFTMinter() {
       console.error("Error fetching badge:", error);
       return null;
     }
-  }, [contract]);
+  }, [contract, nftMinter]);
 
   const getUserBadgeCount = useCallback(async (userAddress: string): Promise<number> => {
-    if (!contract || !userAddress) return 0;
+    if (!contract || !userAddress || !nftMinter) return 0;
     
     try {
       // In v5, you'd use the actual read function
@@ -463,10 +465,10 @@ export function useNFTMinter() {
       console.error("Error fetching user badge count:", error);
       return 0;
     }
-  }, [contract]);
+  }, [contract, nftMinter]);
 
   const getTokenURI = useCallback(async (tokenId: number): Promise<string | null> => {
-    if (!contract) return null;
+    if (!contract || !nftMinter) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -475,7 +477,7 @@ export function useNFTMinter() {
       console.error("Error fetching token URI:", error);
       return null;
     }
-  }, [contract]);
+  }, [contract, nftMinter]);
 
   return {
     contract,
@@ -496,7 +498,7 @@ export function useUSDCToken() {
   const { usdcToken } = getContractAddresses();
   
   // Contract instance
-  const { contract } = useContract(usdcToken, ERC20_ABI);
+  const { contract } = useContract(usdcToken || '', ERC20_ABI);
   
   // Read functions
   const { data: decimals } = useContractRead(contract, "decimals");
@@ -507,7 +509,7 @@ export function useUSDCToken() {
 
   // Helper functions
   const getBalance = useCallback(async (address: string): Promise<bigint | null> => {
-    if (!contract || !address) return null;
+    if (!contract || !address || !usdcToken) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -516,10 +518,10 @@ export function useUSDCToken() {
       console.error("Error fetching USDC balance:", error);
       return null;
     }
-  }, [contract]);
+  }, [contract, usdcToken]);
 
   const getAllowance = useCallback(async (owner: string, spender: string): Promise<bigint | null> => {
-    if (!contract || !owner || !spender) return null;
+    if (!contract || !owner || !spender || !usdcToken) return null;
     
     try {
       // In v5, you'd use the actual read function
@@ -528,10 +530,10 @@ export function useUSDCToken() {
       console.error("Error fetching allowance:", error);
       return null;
     }
-  }, [contract]);
+  }, [contract, usdcToken]);
 
   const approveSpender = useCallback(async (spender: string, amount: bigint) => {
-    if (!contract) throw new Error("Contract not loaded");
+    if (!contract || !usdcToken) throw new Error("Contract not available or not configured");
     
     try {
       const tx = await approve([spender, amount]);
@@ -542,7 +544,7 @@ export function useUSDCToken() {
       toast.error(error?.message || "Failed to approve spending");
       throw error;
     }
-  }, [contract, approve]);
+  }, [contract, approve, usdcToken]);
 
   return {
     contract,

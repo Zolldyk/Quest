@@ -6,6 +6,7 @@ import QuestDisplay from '../components/quests/QuestDisplay';
 import QuestSubmissionForm from '../components/quests/QuestSubmissionForm';
 import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
 import { TrophyIcon } from '@heroicons/react/24/outline';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 // ============ Quests Page Component ============
 /**
@@ -67,7 +68,9 @@ export default function QuestsPage() {
                   </p>
                 </div>
                 <div className="p-6">
-                  <QuestDisplay />
+                  <ErrorBoundary>
+                    <QuestDisplay />
+                  </ErrorBoundary>
                 </div>
               </div>
 
