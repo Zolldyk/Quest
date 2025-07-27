@@ -1,0 +1,667 @@
+// ============ Imports ============
+import { useContract, useContractRead, useContractWrite, useAddress } from "../hooks/useThirdwebV5";
+import { useCallback, useMemo } from "react";
+import { toast } from "react-hot-toast";
+
+// ============ Contract ABIs ============
+// Import your contract ABIs here or define them inline
+// For now, we'll define the essential function signatures
+
+const STAKING_POOL_ABI = [
+  "function stake(uint256 amount) external",
+  "function unstake(uint256 amount) external", 
+  "function getPoolBalance() external view returns (uint256)",
+  "function getStakerInfo(address staker) external view returns (uint256, uint256, uint256, bool)",
+  "function getPoolStats() external view returns (uint256, uint256, uint256, uint256)",
+  "function getStakingToken() external view returns (address)",
+] as const;
+
+const QUEST_MANAGER_ABI = [
+  "function submitQuest(uint256 questId, string calldata tweetUrl) external",
+  "function verifyQuest(uint256 submissionId, bool approved, string calldata rejectionReason) external",
+  "function getQuest(uint256 questId) external view returns (tuple(uint256,string,string,string,uint256,bool,uint256,uint256,uint256,uint256,address,uint256))",
+  "function getSubmission(uint256 submissionId) external view returns (tuple(uint256,address,string,uint256,uint8,uint256,address,uint256,string))",
+  "function getActiveQuests() external view returns (uint256[])",
+  "function getPendingSubmissions() external view returns (uint256[])",
+  "function getPlayerSubmissions(address player) external view returns (uint256[])",
+  "function hasPlayerCompletedQuest(address player, uint256 questId) external view returns (bool)",
+  "function isAdmin(address account) external view returns (bool)",
+  "function getDefaultQuestId() external pure returns (uint256)",
+] as const;
+
+const NFT_MINTER_ABI = [
+  "function getBadge(uint256 tokenId) external view returns (tuple(uint256,address,string,uint256,uint256,string,bool))",
+  "function getUserBadges(address user) external view returns (uint256[])",
+  "function getUserBadgeCount(address user) external view returns (uint256)",
+  "function totalSupply() external view returns (uint256)",
+  "function balanceOf(address owner) external view returns (uint256)",
+  "function tokenURI(uint256 tokenId) external view returns (string)",
+] as const;
+
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)",
+  "function balanceOf(address account) external view returns (uint256)",
+  "function decimals() external view returns (uint8)",
+  "function symbol() external view returns (string)",
+] as const;
+
+// ============ Types ============
+export interface StakerInfo {
+  stakedAmount: bigint;
+  stakeTimestamp: bigint;
+  lastUpdateTime: bigint;
+  isActive: boolean;
+}
+
+export interface PoolStats {
+  totalPoolBalance: bigint;
+  totalStakers: bigint;
+  totalRewardsDistributed: bigint;
+  minimumStakeAmount: bigint;
+}
+
+export interface Quest {
+  questId: bigint;
+  title: string;
+  description: string;
+  requirements: string;
+  rewardAmount: bigint;
+  isActive: boolean;
+  startTime: bigint;
+  endTime: bigint;
+  maxCompletions: bigint;
+  currentCompletions: bigint;
+  creator: string;
+  createTime: bigint;
+}
+
+export interface QuestSubmission {
+  questId: bigint;
+  player: string;
+  tweetUrl: string;
+  submitTime: bigint;
+  status: number; // 0: PENDING, 1: COMPLETED, 2: REJECTED
+  verifyTime: bigint;
+  verifiedBy: string;
+  nftTokenId: bigint;
+  rejectionReason: string;
+}
+
+export interface QuestBadge {
+  questId: bigint;
+  recipient: string;
+  tweetUrl: string;
+  mintTime: bigint;
+  questReward: bigint;
+  questTitle: string;
+  isValid: boolean;
+}
+
+// ============ Contract Addresses ============
+const getContractAddresses = () => {
+  const addresses = {
+    stakingPool: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+    questManager: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+    nftMinter: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+    usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+  };
+
+  // Validate all addresses exist
+  for (const [key, value] of Object.entries(addresses)) {
+    if (!value) {
+      console.error(`Missing environment variable: NEXT_PUBLIC_${key.toUpperCase()}_ADDRESS`);
+      throw new Error(`Missing environment variable for ${key}. Please check your .env.local file.`);
+    }
+  }
+
+  return addresses as Record<keyof typeof addresses, string>;
+};
+
+// ============ Staking Pool Hooks ============
+
+/**
+ * Hook for interacting with StakingPool contract
+ */
+export function useStakingPool() {
+  const { stakingPool } = getContractAddresses();
+  
+  // Contract instance
+  const { contract } = useContract(stakingPool, STAKING_POOL_ABI);
+  
+  // Read functions
+  const { data: poolBalance, refetch: refetchPoolBalance } = useContractRead(
+    contract, "getPoolBalance"
+  );
+  
+  const { data: poolStats, refetch: refetchPoolStats } = useContractRead(
+    contract, "getPoolStats"
+  );
+  
+  // Write functions
+  const { mutateAsync: stake, isPending: isStaking } = useContractWrite(contract, "stake");
+  const { mutateAsync: unstake, isPending: isUnstaking } = useContractWrite(contract, "unstake");
+  
+  // Helper functions
+  const getStakerInfo = useCallback(async (address: string): Promise<StakerInfo | null> => {
+    if (!contract || !address) return null;
+    
+    try {
+      const result = await refetchPoolBalance(); // Use v5 pattern
+      // In v5, you'd need to implement the actual read call
+      // This is a compatibility layer for now
+      return {
+        stakedAmount: BigInt(0),
+        stakeTimestamp: BigInt(0),
+        lastUpdateTime: BigInt(0),
+        isActive: false,
+      };
+    } catch (error) {
+      console.error("Error fetching staker info:", error);
+      return null;
+    }
+  }, [contract, refetchPoolBalance]);
+
+  const stakeTokens = useCallback(async (amount: bigint) => {
+    if (!contract) throw new Error("Contract not loaded");
+    
+    try {
+      const tx = await stake([amount]);
+      toast.success("Tokens staked successfully!");
+      
+      // Refetch data
+      await Promise.all([refetchPoolBalance(), refetchPoolStats()]);
+      
+      return tx;
+    } catch (error: any) {
+      console.error("Staking error:", error);
+      toast.error(error?.message || "Failed to stake tokens");
+      throw error;
+    }
+  }, [contract, stake, refetchPoolBalance, refetchPoolStats]);
+
+  const unstakeTokens = useCallback(async (amount: bigint) => {
+    if (!contract) throw new Error("Contract not loaded");
+    
+    try {
+      const tx = await unstake([amount]);
+      toast.success("Tokens unstaked successfully!");
+      
+      // Refetch data
+      await Promise.all([refetchPoolBalance(), refetchPoolStats()]);
+      
+      return tx;
+    } catch (error: any) {
+      console.error("Unstaking error:", error);
+      toast.error(error?.message || "Failed to unstake tokens");
+      throw error;
+    }
+  }, [contract, unstake, refetchPoolBalance, refetchPoolStats]);
+
+  return {
+    contract,
+    poolBalance,
+    poolStats,
+    isStaking,
+    isUnstaking,
+    getStakerInfo,
+    stakeTokens,
+    unstakeTokens,
+    refetchPoolBalance,
+    refetchPoolStats,
+  };
+}
+
+// ============ Quest Manager Hooks ============
+
+/**
+ * Hook for interacting with QuestManager contract
+ */
+export function useQuestManager() {
+  const { questManager } = getContractAddresses();
+  
+  // Contract instance
+  const { contract } = useContract(questManager, QUEST_MANAGER_ABI);
+  
+  // Read functions
+  const { data: activeQuests, refetch: refetchActiveQuests } = useContractRead(
+    contract, "getActiveQuests"
+  );
+  
+  const { data: pendingSubmissions, refetch: refetchPendingSubmissions } = useContractRead(
+    contract, "getPendingSubmissions"
+  );
+  
+  const { data: defaultQuestId } = useContractRead(contract, "getDefaultQuestId");
+  
+  // Write functions
+  const { mutateAsync: submitQuest, isPending: isSubmitting } = useContractWrite(contract, "submitQuest");
+  const { mutateAsync: verifyQuest, isPending: isVerifying } = useContractWrite(contract, "verifyQuest");
+  const { mutateAsync: toggleStatus, isPending: isToggling } = useContractWrite(contract, "toggleQuestStatus");
+
+  // Helper functions
+  const getQuest = useCallback(async (questId: number): Promise<Quest | null> => {
+    if (!contract) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      const result = await refetchActiveQuests();
+      // This is a compatibility placeholder
+      return {
+        questId: BigInt(questId),
+        title: "Sample Quest",
+        description: "Sample description",
+        requirements: "Sample requirements",
+        rewardAmount: BigInt(0),
+        isActive: true,
+        startTime: BigInt(0),
+        endTime: BigInt(0),
+        maxCompletions: BigInt(0),
+        currentCompletions: BigInt(0),
+        creator: "0x0000000000000000000000000000000000000000",
+        createTime: BigInt(0),
+      };
+    } catch (error) {
+      console.error("Error fetching quest:", error);
+      return null;
+    }
+  }, [contract, refetchActiveQuests]);
+
+  const getSubmission = useCallback(async (submissionId: number): Promise<QuestSubmission | null> => {
+    if (!contract) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      const result = await refetchPendingSubmissions();
+      // This is a compatibility placeholder
+      return {
+        questId: BigInt(0),
+        player: "0x0000000000000000000000000000000000000000",
+        tweetUrl: "",
+        submitTime: BigInt(0),
+        status: 0,
+        verifyTime: BigInt(0),
+        verifiedBy: "0x0000000000000000000000000000000000000000",
+        nftTokenId: BigInt(0),
+        rejectionReason: "",
+      };
+    } catch (error) {
+      console.error("Error fetching submission:", error);
+      return null;
+    }
+  }, [contract, refetchPendingSubmissions]);
+
+  const getPlayerSubmissions = useCallback(async (playerAddress: string): Promise<bigint[] | null> => {
+    if (!contract || !playerAddress) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return [];
+    } catch (error) {
+      console.error("Error fetching player submissions:", error);
+      return null;
+    }
+  }, [contract]);
+
+  const hasPlayerCompleted = useCallback(async (playerAddress: string, questId: number): Promise<boolean> => {
+    if (!contract || !playerAddress) return false;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return false;
+    } catch (error) {
+      console.error("Error checking quest completion:", error);
+      return false;
+    }
+  }, [contract]);
+
+  const checkIsAdmin = useCallback(async (address: string): Promise<boolean> => {
+    if (!contract || !address) return false;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return false;
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      return false;
+    }
+  }, [contract]);
+
+  const submitQuestProof = useCallback(async (questId: number, tweetUrl: string) => {
+    if (!contract) throw new Error("Contract not loaded");
+    
+    try {
+      const tx = await submitQuest([questId, tweetUrl]);
+      toast.success("Quest submitted successfully! Waiting for verification...");
+      
+      // Refetch data
+      await refetchActiveQuests();
+      
+      return tx;
+    } catch (error: any) {
+      console.error("Submit quest error:", error);
+      toast.error(error?.message || "Failed to submit quest");
+      throw error;
+    }
+  }, [contract, submitQuest, refetchActiveQuests]);
+
+  const verifyQuestSubmission = useCallback(async (
+    submissionId: number, 
+    approved: boolean, 
+    rejectionReason: string = ""
+  ) => {
+    if (!contract) throw new Error("Contract not loaded");
+    
+    try {
+      const tx = await verifyQuest([submissionId, approved, rejectionReason]);
+      toast.success(`Quest ${approved ? 'approved' : 'rejected'} successfully!`);
+      
+      // Refetch data
+      await refetchPendingSubmissions();
+      
+      return tx;
+    } catch (error: any) {
+      console.error("Verify quest error:", error);
+      toast.error(error?.message || "Failed to verify quest");
+      throw error;
+    }
+  }, [contract, verifyQuest, refetchPendingSubmissions]);
+
+  const toggleQuestStatus = useCallback(async (questId: number) => {
+    if (!contract) throw new Error("Contract not loaded");
+    
+    try {
+      const tx = await toggleStatus([questId]);
+      toast.success("Quest status updated successfully!");
+      
+      // Refetch data
+      await refetchActiveQuests();
+      
+      return tx;
+    } catch (error: any) {
+      console.error("Toggle quest status error:", error);
+      toast.error(error?.message || "Failed to toggle quest status");
+      throw error;
+    }
+  }, [contract, toggleStatus, refetchActiveQuests]);
+
+  return {
+    contract,
+    activeQuests,
+    pendingSubmissions,
+    defaultQuestId,
+    isSubmitting,
+    isVerifying,
+    isToggling,
+    getQuest,
+    getSubmission,
+    getPlayerSubmissions,
+    hasPlayerCompleted,
+    checkIsAdmin,
+    submitQuestProof,
+    verifyQuestSubmission,
+    toggleQuestStatus,
+    refetchActiveQuests,
+    refetchPendingSubmissions,
+  };
+}
+
+// ============ NFT Minter Hooks ============
+
+/**
+ * Hook for interacting with NFTMinter contract
+ */
+export function useNFTMinter() {
+  const { nftMinter } = getContractAddresses();
+  
+  // Contract instance
+  const { contract } = useContract(nftMinter, NFT_MINTER_ABI);
+  
+  // Read functions
+  const { data: totalSupply } = useContractRead(contract, "totalSupply");
+
+  // Helper functions
+  const getUserBadges = useCallback(async (userAddress: string): Promise<bigint[] | null> => {
+    if (!contract || !userAddress) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return [];
+    } catch (error) {
+      console.error("Error fetching user badges:", error);
+      return null;
+    }
+  }, [contract]);
+
+  const getBadge = useCallback(async (tokenId: number): Promise<QuestBadge | null> => {
+    if (!contract) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return {
+        questId: BigInt(0),
+        recipient: "0x0000000000000000000000000000000000000000",
+        tweetUrl: "",
+        mintTime: BigInt(0),
+        questReward: BigInt(0),
+        questTitle: "",
+        isValid: false,
+      };
+    } catch (error) {
+      console.error("Error fetching badge:", error);
+      return null;
+    }
+  }, [contract]);
+
+  const getUserBadgeCount = useCallback(async (userAddress: string): Promise<number> => {
+    if (!contract || !userAddress) return 0;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return 0;
+    } catch (error) {
+      console.error("Error fetching user badge count:", error);
+      return 0;
+    }
+  }, [contract]);
+
+  const getTokenURI = useCallback(async (tokenId: number): Promise<string | null> => {
+    if (!contract) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return "";
+    } catch (error) {
+      console.error("Error fetching token URI:", error);
+      return null;
+    }
+  }, [contract]);
+
+  return {
+    contract,
+    totalSupply,
+    getUserBadges,
+    getBadge,
+    getUserBadgeCount,
+    getTokenURI,
+  };
+}
+
+// ============ USDC Token Hooks ============
+
+/**
+ * Hook for interacting with USDC token contract
+ */
+export function useUSDCToken() {
+  const { usdcToken } = getContractAddresses();
+  
+  // Contract instance
+  const { contract } = useContract(usdcToken, ERC20_ABI);
+  
+  // Read functions
+  const { data: decimals } = useContractRead(contract, "decimals");
+  const { data: symbol } = useContractRead(contract, "symbol");
+  
+  // Write functions
+  const { mutateAsync: approve, isPending: isApproving } = useContractWrite(contract, "approve");
+
+  // Helper functions
+  const getBalance = useCallback(async (address: string): Promise<bigint | null> => {
+    if (!contract || !address) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return BigInt(0);
+    } catch (error) {
+      console.error("Error fetching USDC balance:", error);
+      return null;
+    }
+  }, [contract]);
+
+  const getAllowance = useCallback(async (owner: string, spender: string): Promise<bigint | null> => {
+    if (!contract || !owner || !spender) return null;
+    
+    try {
+      // In v5, you'd use the actual read function
+      return BigInt(0);
+    } catch (error) {
+      console.error("Error fetching allowance:", error);
+      return null;
+    }
+  }, [contract]);
+
+  const approveSpender = useCallback(async (spender: string, amount: bigint) => {
+    if (!contract) throw new Error("Contract not loaded");
+    
+    try {
+      const tx = await approve([spender, amount]);
+      toast.success("Approval successful!");
+      return tx;
+    } catch (error: any) {
+      console.error("Approve error:", error);
+      toast.error(error?.message || "Failed to approve spending");
+      throw error;
+    }
+  }, [contract, approve]);
+
+  return {
+    contract,
+    decimals,
+    symbol,
+    isApproving,
+    getBalance,
+    getAllowance,
+    approveSpender,
+  };
+}
+
+// ============ Combined Hooks ============
+
+/**
+ * Hook that combines all contract interactions for convenience
+ */
+export function useContracts() {
+  const stakingPool = useStakingPool();
+  const questManager = useQuestManager();
+  const nftMinter = useNFTMinter();
+  const usdcToken = useUSDCToken();
+
+  // Combined loading states
+  const isLoading = useMemo(() => ({
+    staking: stakingPool.isStaking,
+    unstaking: stakingPool.isUnstaking,
+    submitting: questManager.isSubmitting,
+    verifying: questManager.isVerifying,
+    approving: usdcToken.isApproving,
+  }), [
+    stakingPool.isStaking,
+    stakingPool.isUnstaking,
+    questManager.isSubmitting,
+    questManager.isVerifying,
+    usdcToken.isApproving,
+  ]);
+
+  // Check if any operation is loading
+  const isAnyLoading = useMemo(() => 
+    Object.values(isLoading).some(loading => loading),
+    [isLoading]
+  );
+
+  return {
+    stakingPool,
+    questManager,
+    nftMinter,
+    usdcToken,
+    isLoading,
+    isAnyLoading,
+  };
+}
+
+// ============ Utility Functions ============
+
+/**
+ * Format bigint to human readable string
+ */
+export function formatTokenAmount(
+  amount: bigint | undefined, 
+  decimals: number = 6, 
+  displayDecimals: number = 2
+): string {
+  if (!amount) return "0";
+  
+  try {
+    const divisor = BigInt(10 ** decimals);
+    const quotient = amount / divisor;
+    const remainder = amount % divisor;
+    
+    if (remainder === BigInt(0)) {
+      return quotient.toString();
+    }
+    
+    const decimal = remainder.toString().padStart(decimals, "0");
+    const trimmed = decimal.slice(0, displayDecimals).replace(/0+$/, "");
+    
+    return trimmed ? `${quotient}.${trimmed}` : quotient.toString();
+  } catch (error) {
+    console.error("Error formatting token amount:", error);
+    return "0";
+  }
+}
+
+/**
+ * Parse human readable string to bigint
+ */
+export function parseTokenAmount(amount: string, decimals: number = 6): bigint {
+  try {
+    const [whole, decimal = ""] = amount.split(".");
+    const paddedDecimal = decimal.padEnd(decimals, "0").slice(0, decimals);
+    const combined = whole + paddedDecimal;
+    return BigInt(combined);
+  } catch (error) {
+    console.error("Error parsing token amount:", error);
+    return BigInt(0);
+  }
+}
+
+/**
+ * Check if contracts are properly configured
+ */
+export function useContractValidation() {
+  const addresses = getContractAddresses();
+  
+  const isValid = useMemo(() => {
+    return Object.values(addresses).every(addr => addr && addr !== "");
+  }, [addresses]);
+
+  const missingAddresses = useMemo(() => {
+    return Object.entries(addresses)
+      .filter(([, addr]) => !addr || addr === "")
+      .map(([key]) => key);
+  }, [addresses]);
+
+  return {
+    isValid,
+    missingAddresses,
+    addresses,
+  };
+}

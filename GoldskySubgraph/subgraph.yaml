@@ -1,0 +1,95 @@
+# ============ Goldsky Subgraph Configuration - TESTNET ============
+# This file defines the subgraph configuration for indexing Quest DeFi dApp events on Etherlink TESTNET
+
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+
+# ============ Data Sources Configuration - TESTNET ============
+dataSources:
+  # ============ Quest Manager Contract - TESTNET ============
+  - kind: ethereum
+    name: QuestManager
+    network: etherlink-testnet
+    source:
+      # TESTNET contract address
+      address: "0x02fc1ecc6c04fdd2760e74f9343b69d9c3798ad0"
+      abi: QuestManager
+      # TESTNET deployment block
+      startBlock: 20744885
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - QuestTemplate
+        - Player
+        - QuestSubmission
+        - GlobalStats
+        - DailyStats
+        - EventLog
+      abis:
+        - name: QuestManager
+          file: ./abis/QuestManager.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        # Event: QuestCreated(indexed uint256,string,uint256,uint256,uint256,indexed address)
+        - event: QuestCreated(indexed uint256,string,uint256,uint256,uint256,indexed address)
+          handler: handleQuestCreated
+        # Event: QuestSubmitted(indexed uint256,indexed uint256,indexed address,string,uint256)
+        - event: QuestSubmitted(indexed uint256,indexed uint256,indexed address,string,uint256)
+          handler: handleQuestSubmitted
+        # Event: QuestVerified(indexed uint256,indexed uint256,indexed address,uint8,address,uint256)
+        - event: QuestVerified(indexed uint256,indexed uint256,indexed address,uint8,address,uint256)
+          handler: handleQuestVerified
+        # Event: QuestRejected(indexed uint256,indexed uint256,indexed address,string,address)
+        - event: QuestRejected(indexed uint256,indexed uint256,indexed address,string,address)
+          handler: handleQuestRejected
+        # Event: RewardDistributed(indexed uint256,indexed uint256,indexed address,uint256)
+        - event: RewardDistributed(indexed uint256,indexed uint256,indexed address,uint256)
+          handler: handleRewardDistributed
+        # Event: QuestStatusUpdated(indexed uint256,bool)
+        - event: QuestStatusUpdated(indexed uint256,bool)
+          handler: handleQuestStatusUpdated
+      file: ./src/mappings.ts
+
+  # ============ NFT Minter Contract - TESTNET ============
+  - kind: ethereum
+    name: NFTMinter
+    network: etherlink-testnet
+    source:
+      # TESTNET contract address
+      address: "0x9d44cb1dbd766dd8c4ab8493dbf8cbfb9650f907"
+      abi: NFTMinter
+      # TESTNET deployment block
+      startBlock: 20719160
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - QuestNFT
+        - Player
+        - NFTTransfer
+        - GlobalStats
+        - EventLog
+      abis:
+        - name: NFTMinter
+          file: ./abis/NFTMinter.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        # Event: QuestNFTMinted(indexed uint256,indexed address,indexed uint256,string,uint256)
+        - event: QuestNFTMinted(indexed uint256,indexed address,indexed uint256,string,uint256)
+          handler: handleQuestNFTMinted
+        # Standard ERC721 Transfer event for tracking NFT ownership changes
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleNFTTransfer
+      file: ./src/mappings.ts
+
+# ============ Features Configuration ============
+features:
+  - grafting
+  - fullTextSearch
+  - ipfsOnEthereumContracts

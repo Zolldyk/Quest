@@ -1,0 +1,15 @@
+Smart Contracts/
+GoldskySubgraph/
+lib/
+out/
+cache/
+broadcast/
+deployments/
+foundry.toml
+*.sol
+node_modules/
+.git/
+.next/
+README.md
+CLAUDE.md
+.gitignore

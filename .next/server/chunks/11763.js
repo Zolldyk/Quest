@@ -1,0 +1,1 @@
+"use strict";exports.id=11763,exports.ids=[11763],exports.modules={11763:(a,b,c)=>{c.r(b),c.d(b,{default:()=>d});let d={connecting:"스마트 계정에 연결 중",failedToConnect:"스마트 계정에 연결하지 못했습니다",wrongNetworkScreen:{failedToSwitch:"네트워크 전환 실패",subtitle:"지갑이 필요한 네트워크에 연결되어 있지 않습니다",title:"잘못된 네트워크"}}}};

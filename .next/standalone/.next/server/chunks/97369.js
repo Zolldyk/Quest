@@ -1,0 +1,1 @@
+"use strict";exports.id=97369,exports.ids=[97369],exports.modules={97369:(a,b,c)=>{c.r(b),c.d(b,{eth_getTransactionCount:()=>e});var d=c(43533);async function e(a,b){let c=await a({method:"eth_getTransactionCount",params:[b.address,b.blockNumber?(0,d.cK)(b.blockNumber):b.blockTag||"pending"]});return(0,d.ME)(c)}}};

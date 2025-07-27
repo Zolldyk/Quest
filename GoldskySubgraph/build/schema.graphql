@@ -1,0 +1,336 @@
+# ============ Schema Definition for Quest DeFi dApp ============
+# This schema defines the entities and relationships for indexing
+# quest management and NFT minting events on Etherlink
+
+# ============ Quest System Entities ============
+
+"""
+Represents a quest template created by admins
+"""
+type QuestTemplate @entity(immutable: false) {
+  # Unique identifier: questId
+  id: ID!
+  
+  # Quest ID from the contract
+  questId: BigInt!
+  
+  # Quest type/category (e.g., "social_media", "twitter_post")
+  questType: String!
+  
+  # Reward amount for completing this quest (in USDC wei)
+  rewardAmount: BigInt!
+  
+  # Time window for submissions (in seconds)
+  submissionWindow: BigInt!
+  
+  # Quest end time (timestamp)
+  endTime: BigInt!
+  
+  # Address of admin who created this quest
+  creator: Bytes!
+  
+  # Whether this quest is currently active
+  isActive: Boolean!
+  
+  # Timestamp when quest was created
+  createdAt: BigInt!
+  
+  # Block number when quest was created
+  createdBlock: BigInt!
+  
+  # All submissions for this quest
+  submissions: [QuestSubmission!]! @derivedFrom(field: "quest")
+  
+  # Number of completed submissions
+  completedCount: Int!
+  
+  # Total rewards distributed for this quest
+  totalRewardsDistributed: BigInt!
+}
+
+"""
+Represents a player who participates in quests
+"""
+type Player @entity(immutable: false) {
+  # Unique identifier: user's wallet address
+  id: ID!
+  
+  # Player's wallet address
+  address: Bytes!
+  
+  # Total quest submissions by this player
+  totalSubmissions: Int!
+  
+  # Total quests completed (verified) by this player
+  questsCompleted: Int!
+  
+  # Total quests rejected
+  questsRejected: Int!
+  
+  # Total rewards earned from quests (in USDC wei)
+  totalRewardsEarned: BigInt!
+  
+  # Total NFTs minted by this player
+  nftsMinted: Int!
+  
+  # Timestamp of first quest submission
+  firstSubmissionTimestamp: BigInt!
+  
+  # Timestamp of last quest activity
+  lastActivityTimestamp: BigInt!
+  
+  # All quest submissions by this player
+  submissions: [QuestSubmission!]! @derivedFrom(field: "player")
+  
+  # All NFTs owned by this player
+  nfts: [QuestNFT!]! @derivedFrom(field: "owner")
+}
+
+"""
+Represents a quest submission by a player
+"""
+type QuestSubmission @entity(immutable: false) {
+  # Unique identifier: submissionId from contract
+  id: ID!
+  
+  # Submission ID from contract
+  submissionId: BigInt!
+  
+  # Reference to the quest template
+  quest: QuestTemplate!
+  
+  # Reference to the player who submitted
+  player: Player!
+  
+  # Tweet URL or proof submitted by player
+  tweetUrl: String!
+  
+  # Current status: 0 = pending, 1 = approved, 2 = rejected
+  status: Int!
+  
+  # Whether this submission was verified (approved or rejected)
+  isVerified: Boolean!
+  
+  # Whether this submission was approved specifically
+  isApproved: Boolean!
+  
+  # Reward amount if approved (in USDC wei)
+  rewardAmount: BigInt!
+  
+  # Whether reward was distributed
+  rewardDistributed: Boolean!
+  
+  # NFT minted for this submission (if approved)
+  nftMinted: QuestNFT
+  
+  # Reason for rejection (if rejected)
+  rejectionReason: String
+  
+  # Timestamp when submitted
+  submissionTimestamp: BigInt!
+  
+  # Timestamp when verified (if verified)
+  verificationTimestamp: BigInt
+  
+  # Transaction hash of submission
+  submissionTxHash: Bytes!
+  
+  # Transaction hash of verification
+  verificationTxHash: Bytes
+  
+  # Block number of submission
+  submissionBlock: BigInt!
+  
+  # Block number of verification
+  verificationBlock: BigInt
+  
+  # Address of admin who verified (if verified)
+  verifiedBy: Bytes
+}
+
+"""
+Represents an NFT badge minted for quest completion
+"""
+type QuestNFT @entity(immutable: false) {
+  # Unique identifier: NFT token ID
+  id: ID!
+  
+  # NFT token ID
+  tokenId: BigInt!
+  
+  # Current owner of the NFT
+  owner: Player!
+  
+  # Original recipient (may be different from current owner if transferred)
+  originalRecipient: Player!
+  
+  # Quest submission that this NFT was minted for
+  submission: QuestSubmission!
+  
+  # Quest that this NFT represents
+  quest: QuestTemplate!
+  
+  # Tweet URL associated with this NFT
+  tweetUrl: String!
+  
+  # NFT contract address
+  contractAddress: Bytes!
+  
+  # Token URI/metadata
+  tokenURI: String
+  
+  # Timestamp when NFT was minted
+  mintTimestamp: BigInt!
+  
+  # Transaction hash of minting
+  mintTxHash: Bytes!
+  
+  # Block number when minted
+  mintBlock: BigInt!
+  
+  # Whether the NFT is still owned by original recipient
+  isOriginalOwner: Boolean!
+  
+  # Transfer history
+  transfers: [NFTTransfer!]! @derivedFrom(field: "nft")
+}
+
+"""
+Represents NFT transfer events
+"""
+type NFTTransfer @entity(immutable: true) {
+  # Unique identifier: txHash-logIndex
+  id: ID!
+  
+  # NFT that was transferred
+  nft: QuestNFT!
+  
+  # Address transferred from (0x0 for minting)
+  from: Bytes!
+  
+  # Address transferred to
+  to: Bytes!
+  
+  # Transaction hash
+  transactionHash: Bytes!
+  
+  # Block number
+  blockNumber: BigInt!
+  
+  # Block timestamp
+  timestamp: BigInt!
+}
+
+# ============ Global Statistics ============
+
+"""
+Global statistics for the entire Quest dApp
+"""
+type GlobalStats @entity(immutable: false) {
+  # Singleton entity with ID "global"
+  id: ID!
+  
+  # Total unique players
+  totalPlayers: Int!
+  
+  # Total quest templates created
+  totalQuests: Int!
+  
+  # Total quest submissions
+  totalSubmissions: Int!
+  
+  # Total quests completed (approved)
+  totalQuestsCompleted: Int!
+  
+  # Total quests rejected
+  totalQuestsRejected: Int!
+  
+  # Total rewards distributed (in USDC wei)
+  totalRewardsDistributed: BigInt!
+  
+  # Total NFTs minted
+  totalNFTsMinted: Int!
+  
+  # Average reward per completed quest
+  averageRewardPerQuest: BigInt!
+  
+  # Number of active players (submitted at least one quest)
+  activePlayers: Int!
+  
+  # Number of active quests (currently accepting submissions)
+  activeQuests: Int!
+  
+  # Timestamp of last update
+  lastUpdated: BigInt!
+  
+  # Block number of last update
+  lastUpdatedBlock: BigInt!
+}
+
+# ============ Daily Analytics ============
+
+"""
+Daily aggregated statistics
+"""
+type DailyStats @entity(immutable: true) {
+  # Unique identifier: YYYY-MM-DD format
+  id: ID!
+  
+  # Date in YYYY-MM-DD format
+  date: String!
+  
+  # Unix timestamp for the start of the day
+  timestamp: BigInt!
+  
+  # New players on this day
+  newPlayers: Int!
+  
+  # Quest submissions on this day
+  submissions: Int!
+  
+  # Quests completed on this day
+  questsCompleted: Int!
+  
+  # Quests rejected on this day
+  questsRejected: Int!
+  
+  # Rewards distributed on this day
+  rewardsDistributed: BigInt!
+  
+  # NFTs minted on this day
+  nftsMinted: Int!
+  
+  # New quests created on this day
+  newQuests: Int!
+}
+
+# ============ Event Log Entities (For Debugging) ============
+
+"""
+Raw event logs for debugging and audit purposes
+"""
+type EventLog @entity(immutable: true) {
+  # Unique identifier: txHash-logIndex
+  id: ID!
+  
+  # Event name (e.g., "QuestCreated", "QuestSubmitted", "QuestVerified")
+  eventName: String!
+  
+  # Contract address that emitted the event
+  contractAddress: Bytes!
+  
+  # Transaction hash
+  transactionHash: Bytes!
+  
+  # Block number
+  blockNumber: BigInt!
+  
+  # Block timestamp
+  timestamp: BigInt!
+  
+  # Log index within the transaction
+  logIndex: BigInt!
+  
+  # Raw event data (JSON string)
+  rawData: String!
+}
