@@ -103,14 +103,7 @@ export default function CustomThirdwebProvider({ children }: CustomThirdwebProvi
   const client = getClient();
   
   return (
-    <ThirdwebProvider
-      client={client}
-      appMetadata={dAppConfig}
-      autoConnect={{
-        timeout: 15000, // 15 seconds timeout
-        retryLimit: 3,
-      }}
-    >
+    <ThirdwebProvider>
       {children}
     </ThirdwebProvider>
   );
