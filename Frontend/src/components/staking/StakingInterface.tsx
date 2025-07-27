@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAddress } from '../../hooks/useThirdwebV5';
 import { useStakingPool, useUSDCToken, formatTokenAmount, parseTokenAmount } from '../../hooks/useContracts';
-import { WalletProtected } from '../wallet/WalletConnection';
+import WalletConnectionV5 from '../wallet/WalletConnectionV5';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 // ============ Types ============
@@ -209,8 +209,19 @@ export default function StakingInterface() {
   };
 
   // ============ JSX Return ============
+  
+  // Check if wallet is connected
+  if (!address) {
+    return (
+      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-200 text-center">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Connect Your Wallet</h2>
+        <p className="text-gray-600 mb-6">Connect your wallet to access staking features</p>
+        <WalletConnectionV5 variant="default" />
+      </div>
+    );
+  }
+
   return (
-    <WalletProtected>
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
@@ -531,7 +542,6 @@ export default function StakingInterface() {
           </div>
         </div>
       </div>
-    </WalletProtected>
   );
 }
 

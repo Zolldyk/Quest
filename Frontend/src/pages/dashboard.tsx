@@ -1,12 +1,34 @@
 // ============ Imports ============
-import { NextPage } from 'next';
-import Head from 'next/head';
-import UserDashboard from '../components/dashboard/UserDashboard';
-import StakesSummary from '../components/dashboard/StakesSummary';
-import SubmissionHistory from '../components/dashboard/SubmissionHistory';
-import NFTGallery from '../components/nft/NFTGallery';
-import { WalletProtected } from '../components/wallet/WalletConnection';
-import { useAuth } from '../hooks/useAuth';
+'use client';
+
+import { useActiveAccount } from 'thirdweb/react';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
+import { UserIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+
+// Dynamically import components that use contracts to avoid SSR issues
+const UserDashboard = dynamic(() => import('../components/dashboard/UserDashboard'), {
+  ssr: false,
+  loading: () => <LoadingSpinner />
+});
+
+const StakesSummary = dynamic(() => import('../components/dashboard/StakesSummary'), {
+  ssr: false,
+  loading: () => <LoadingSpinner />
+});
+
+const SubmissionHistory = dynamic(() => import('../components/dashboard/SubmissionHistory'), {
+  ssr: false,
+  loading: () => <LoadingSpinner />
+});
+
+const NFTGallery = dynamic(() => import('../components/nft/NFTGallery'), {
+  ssr: false,
+  loading: () => <LoadingSpinner />
+});
 
 // ============ Dashboard Page Component ============
 /**
@@ -14,19 +36,20 @@ import { useAuth } from '../hooks/useAuth';
  * @notice User dashboard showing stakes, quest history, and NFT collection
  * @dev Displays comprehensive user data and activity overview
  */
-const DashboardPage: NextPage = () => {
+export default function DashboardPage() {
   // ============ Hooks ============
-  const { isConnected, address } = useAuth();
+  const account = useActiveAccount();
+  const isConnected = !!account;
+  const address = account?.address;
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <>
-      <Head>
-        <title>Dashboard - Quest</title>
-        <meta 
-          name="description" 
-          content="View your quest activity, stakes, rewards, and NFT collection" 
-        />
-      </Head>
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -45,9 +68,7 @@ const DashboardPage: NextPage = () => {
             <div className="max-w-2xl mx-auto">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+                  <UserIcon className="w-8 h-8 text-gray-400" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
                   Connect Your Wallet
@@ -55,7 +76,7 @@ const DashboardPage: NextPage = () => {
                 <p className="text-gray-600 mb-6">
                   Connect your wallet to view your dashboard, quest history, and NFT collection
                 </p>
-                <WalletProtected>Connected</WalletProtected>
+                <WalletConnectionV5 variant="default" />
               </div>
             </div>
           ) : (
@@ -96,7 +117,7 @@ const DashboardPage: NextPage = () => {
                       </p>
                     </div>
                     <div className="p-6">
-                      <UserDashboard />
+                      {isClient ? <UserDashboard /> : <LoadingSpinner />}
                     </div>
                   </div>
 
@@ -111,7 +132,7 @@ const DashboardPage: NextPage = () => {
                       </p>
                     </div>
                     <div className="p-6">
-                      <SubmissionHistory />
+                      {isClient ? <SubmissionHistory /> : <LoadingSpinner />}
                     </div>
                   </div>
 
@@ -126,7 +147,7 @@ const DashboardPage: NextPage = () => {
                       </p>
                     </div>
                     <div className="p-6">
-                      <NFTGallery />
+                      {isClient ? <NFTGallery /> : <LoadingSpinner />}
                     </div>
                   </div>
                 </div>
@@ -144,7 +165,7 @@ const DashboardPage: NextPage = () => {
                       </p>
                     </div>
                     <div className="p-6">
-                      <StakesSummary />
+                      {isClient ? <StakesSummary /> : <LoadingSpinner />}
                     </div>
                   </div>
 
@@ -156,7 +177,7 @@ const DashboardPage: NextPage = () => {
                       </h2>
                     </div>
                     <div className="p-6 space-y-3">
-                      <a
+                      <Link
                         href="/quests"
                         className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors duration-200"
                       >
@@ -169,9 +190,9 @@ const DashboardPage: NextPage = () => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                      </a>
+                      </Link>
 
-                      <a
+                      <Link
                         href="/staking"
                         className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors duration-200"
                       >
@@ -184,7 +205,7 @@ const DashboardPage: NextPage = () => {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                      </a>
+                      </Link>
                     </div>
                   </div>
 
@@ -246,6 +267,4 @@ const DashboardPage: NextPage = () => {
       </div>
     </>
   );
-};
-
-export default DashboardPage;
+}

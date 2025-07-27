@@ -1,10 +1,23 @@
 // ============ Imports ============
-import { NextPage } from 'next';
-import Head from 'next/head';
-import StakingInterface from '../components/staking/StakingInterface';
-import PoolStats from '../components/stats/PoolStats';
-import { WalletProtected } from '../components/wallet/WalletConnection';
-import { useAuth } from '../hooks/useAuth';
+'use client';
+
+import { useActiveAccount } from 'thirdweb/react';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
+import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+
+// Dynamically import components that use contracts to avoid SSR issues
+const StakingInterface = dynamic(() => import('../components/staking/StakingInterface'), {
+  ssr: false,
+  loading: () => <LoadingSpinner />
+});
+
+const PoolStats = dynamic(() => import('../components/stats/PoolStats'), {
+  ssr: false,
+  loading: () => <LoadingSpinner />
+});
 
 // ============ Staking Page Component ============
 /**
@@ -12,19 +25,19 @@ import { useAuth } from '../hooks/useAuth';
  * @notice Page for users to stake USDC into the quest reward pool
  * @dev Displays staking interface, pool statistics, and connection status
  */
-const StakingPage: NextPage = () => {
+export default function StakingPage() {
   // ============ Hooks ============
-  const { isConnected } = useAuth();
+  const account = useActiveAccount();
+  const isConnected = !!account;
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <>
-      <Head>
-        <title>Stake USDC - Quest</title>
-        <meta 
-          name="description" 
-          content="Stake USDC to fund community quests and support the Quest ecosystem" 
-        />
-      </Head>
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,7 +70,7 @@ const StakingPage: NextPage = () => {
                       <p>Please connect your wallet to stake USDC.</p>
                     </div>
                     <div className="mt-4">
-                      <WalletProtected>Connect Wallet</WalletProtected>
+                      <WalletConnectionV5 variant="compact" />
                     </div>
                   </div>
                 </div>
@@ -78,7 +91,7 @@ const StakingPage: NextPage = () => {
                   </p>
                 </div>
                 <div className="p-6">
-                  <StakingInterface />
+                  {isClient ? <StakingInterface /> : <LoadingSpinner />}
                 </div>
               </div>
 
@@ -164,7 +177,7 @@ const StakingPage: NextPage = () => {
                   </p>
                 </div>
                 <div className="p-6">
-                  <PoolStats />
+                  {isClient ? <PoolStats /> : <LoadingSpinner />}
                 </div>
               </div>
 
@@ -195,6 +208,4 @@ const StakingPage: NextPage = () => {
       </div>
     </>
   );
-};
-
-export default StakingPage;
+}

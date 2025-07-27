@@ -1,10 +1,11 @@
 // ============ Imports ============
-import { NextPage } from 'next';
-import Head from 'next/head';
+'use client';
+
+import { useActiveAccount } from 'thirdweb/react';
 import QuestDisplay from '../components/quests/QuestDisplay';
 import QuestSubmissionForm from '../components/quests/QuestSubmissionForm';
-import { WalletProtected } from '../components/wallet/WalletConnection';
-import { useAuth } from '../hooks/useAuth';
+import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
+import { TrophyIcon } from '@heroicons/react/24/outline';
 
 // ============ Quests Page Component ============
 /**
@@ -12,19 +13,13 @@ import { useAuth } from '../hooks/useAuth';
  * @notice Page for users to view and complete available quests
  * @dev Displays quest information, submission form, and user guidance
  */
-const QuestsPage: NextPage = () => {
+export default function QuestsPage() {
   // ============ Hooks ============
-  const { isConnected } = useAuth();
+  const account = useActiveAccount();
+  const isConnected = !!account;
 
   return (
     <>
-      <Head>
-        <title>Complete Quests - Quest</title>
-        <meta 
-          name="description" 
-          content="Complete community quests, earn USDC rewards, and mint unique NFT badges" 
-        />
-      </Head>
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,7 +49,7 @@ const QuestsPage: NextPage = () => {
                 <p className="text-gray-600 mb-4">
                   Connect your wallet to participate in quests and earn rewards
                 </p>
-                <WalletProtected>Connect Wallet</WalletProtected>
+                <WalletConnectionV5 variant="default" />
               </div>
             </div>
           )}
@@ -252,6 +247,4 @@ const QuestsPage: NextPage = () => {
       </div>
     </>
   );
-};
-
-export default QuestsPage;
+}
