@@ -1,0 +1,74 @@
+specVersion: 0.0.5
+schema:
+  file: schema.graphql
+dataSources:
+  - kind: ethereum
+    name: QuestManager
+    network: etherlink-testnet
+    source:
+      address: "0x02fc1ecc6c04fdd2760e74f9343b69d9c3798ad0"
+      abi: QuestManager
+      startBlock: 20744885
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - QuestTemplate
+        - Player
+        - QuestSubmission
+        - GlobalStats
+        - DailyStats
+        - EventLog
+      abis:
+        - name: QuestManager
+          file: QuestManager/abis/QuestManager.json
+        - name: ERC20
+          file: QuestManager/abis/ERC20.json
+      eventHandlers:
+        - event: QuestCreated(indexed uint256,string,uint256,uint256,uint256,indexed address)
+          handler: handleQuestCreated
+        - event: QuestSubmitted(indexed uint256,indexed uint256,indexed address,string,uint256)
+          handler: handleQuestSubmitted
+        - event: QuestVerified(indexed uint256,indexed uint256,indexed
+            address,uint8,address,uint256)
+          handler: handleQuestVerified
+        - event: QuestRejected(indexed uint256,indexed uint256,indexed address,string,address)
+          handler: handleQuestRejected
+        - event: RewardDistributed(indexed uint256,indexed uint256,indexed address,uint256)
+          handler: handleRewardDistributed
+        - event: QuestStatusUpdated(indexed uint256,bool)
+          handler: handleQuestStatusUpdated
+      file: QuestManager/QuestManager.wasm
+  - kind: ethereum
+    name: NFTMinter
+    network: etherlink-testnet
+    source:
+      address: "0x9d44cb1dbd766dd8c4ab8493dbf8cbfb9650f907"
+      abi: NFTMinter
+      startBlock: 20719160
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - QuestNFT
+        - Player
+        - NFTTransfer
+        - GlobalStats
+        - EventLog
+      abis:
+        - name: NFTMinter
+          file: NFTMinter/abis/NFTMinter.json
+        - name: ERC721
+          file: NFTMinter/abis/ERC721.json
+      eventHandlers:
+        - event: QuestNFTMinted(indexed uint256,indexed address,indexed uint256,string,uint256)
+          handler: handleQuestNFTMinted
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleNFTTransfer
+      file: QuestManager/QuestManager.wasm
+features:
+  - grafting
+  - fullTextSearch
+  - ipfsOnEthereumContracts

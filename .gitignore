@@ -13,3 +13,6 @@ docs/
 # Dotenv file
 .env
 .CLAUDE.md
+GoldskySubgraph/README.md
+node_modules
+.vercel

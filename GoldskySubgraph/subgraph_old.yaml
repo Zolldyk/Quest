@@ -1,0 +1,111 @@
+# ============ Goldsky Subgraph Configuration ============
+# This file defines the subgraph configuration for indexing Quest DeFi dApp events on Etherlink
+
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+
+# ============ Data Sources Configuration ============
+dataSources:
+  # ============ Quest Manager Contract ============
+  - kind: ethereum
+    name: QuestManager
+    network: etherlink # Use 'etherlink-testnet' for testnet deployment
+    source:
+      # TODO: Deployed contract address after deployment
+      address: "0x02fc1ecc6c04fdd2760e74f9343b69d9c3798ad0"
+      abi: QuestManager
+      # TODO: Deployment block number for faster sync
+      startBlock: 20744885
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Player
+        - Quest
+        - QuestNFT
+        - GlobalStats
+        - DailyStats
+        - EventLog
+      abis:
+        - name: QuestManager
+          file: ./abis/QuestManager.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        # Event: QuestSubmitted(indexed uint256,indexed uint256,indexed address,string,uint256)
+        - event: QuestSubmitted(indexed uint256,indexed uint256,indexed address,string,uint256)
+          handler: handleQuestSubmitted
+        # Event: QuestVerified(indexed uint256,indexed uint256,indexed address,uint8,address,uint256)
+        - event: QuestVerified(indexed uint256,indexed uint256,indexed address,uint8,address,uint256)
+          handler: handleQuestVerified
+        # Event: RewardDistributed(indexed uint256,indexed uint256,indexed address,uint256)
+        - event: RewardDistributed(indexed uint256,indexed uint256,indexed address,uint256)
+          handler: handleRewardDistributed
+      file: ./src/mappings.ts
+
+  # ============ NFT Minter Contract ============
+  - kind: ethereum
+    name: NFTMinter
+    network: etherlink # Use 'etherlink-testnet' for testnet deployment
+    source:
+      # TODO: Deployed contract address after deployment
+      address: "0x9d44cb1dbd766dd8c4ab8493dbf8cbfb9650f907"
+      abi: NFTMinter
+      # TODO: Deployment block number for faster sync
+      startBlock: 20719160
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - QuestNFT
+        - Player
+        - GlobalStats
+        - EventLog
+      abis:
+        - name: NFTMinter
+          file: ./abis/NFTMinter.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        # Event: QuestNFTMinted(indexed uint256,indexed address,indexed uint256,string,uint256)
+        - event: QuestNFTMinted(indexed uint256,indexed address,indexed uint256,string,uint256)
+          handler: handleQuestNFTMinted
+        # Standard ERC721 Transfer event for tracking NFT ownership changes
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleNFTTransfer
+      file: ./src/mappings.ts
+
+# ============ Features Configuration ============
+features:
+  # Enable indexing of function calls (optional, for more advanced tracking)
+  - grafting
+  # Enable full-text search capabilities
+  - fullTextSearch
+  # Enable IPFS for metadata storage
+  - ipfsOnEthereumContracts
+# ============ ABI Files Required ============
+# Include these ABI files in the ./abis/ directory:
+# - StakingPool.json (from your compiled StakingPool.sol)
+# - QuestManager.json (from your compiled QuestManager.sol)
+# - NFTMinter.json (from your compiled NFTMinter.sol)
+# - ERC20.json (standard ERC20 ABI for USDC interactions)
+# - ERC721.json (standard ERC721 ABI for NFT interactions)
+
+# ============ Deployment Instructions ============
+# 1. Update contract addresses above with actual deployed addresses
+# 2. Update startBlock numbers with actual deployment block numbers
+# 3. Ensure all ABI files are present in ./abis/ directory
+# 4. Build and deploy with Goldsky CLI:
+#    goldsky subgraph deploy quest-defi/v1.0.0 --path .
+# 5. Monitor indexing progress on Goldsky dashboard
+
+# ============ Network-specific Overrides ============
+# For testnet deployment, create a separate subgraph.testnet.yaml with:
+# - Different contract addresses
+# - Different startBlock numbers
+# - Network name: etherlink-testnet

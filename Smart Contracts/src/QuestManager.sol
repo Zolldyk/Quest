@@ -1,21 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.20;
 
 // ============ Imports ============
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// ============ Interfaces ============
-interface IStakingPool {
-    function distributeReward(address recipient, uint256 amount) external;
-    function getPoolBalance() external view returns (uint256);
-}
-
-interface INFTMinter {
-    function mintQuestNFT(address recipient, uint256 questId, string memory tweetUrl) external returns (uint256);
-}
+// Note: Interfaces removed to fix abstract contract error
+// We'll use low-level calls or cast addresses when needed
 
 // Layout of Contract:
 // version
@@ -44,7 +36,7 @@ interface INFTMinter {
  * @notice This contract manages quest submissions, verification, and reward distribution
  * @dev Handles the core quest logic with admin verification and automatic reward distribution
  */
-contract QuestManager is ReentrancyGuard, Ownable, Pausable {
+contract QuestManager is Ownable, Pausable, ReentrancyGuard {
     // ============ Errors ============
     error QuestManager__InvalidAddress();
     error QuestManager__InvalidAmount();
@@ -98,8 +90,8 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
 
     // ============ State variables ============
     // Contract dependencies
-    IStakingPool private immutable i_stakingPool;
-    INFTMinter private s_nftMinter;
+    address private immutable i_stakingPool;
+    address private s_nftMinter;
 
     // Quest tracking
     uint256 private s_nextQuestId = 1;
@@ -204,17 +196,19 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
     /**
      * @notice Initialize the quest manager with staking pool reference
      * @param stakingPool Address of the staking pool contract
+     * @param initialOwner Address to set as the contract owner
      * @dev Sets the contract owner as the first admin
      */
-    constructor(address stakingPool) Ownable(msg.sender) validAddress(stakingPool) {
-        i_stakingPool = IStakingPool(stakingPool);
+    constructor(address stakingPool, address initialOwner) 
+        validAddress(stakingPool) 
+        validAddress(initialOwner)
+        Ownable(initialOwner) 
+    {
+        i_stakingPool = stakingPool;
 
         // Set owner as first admin
-        s_admins[msg.sender] = true;
+        s_admins[initialOwner] = true;
         s_adminCount = 1;
-
-        // Create the default quest for MVP
-        _createDefaultQuest();
     }
 
     // ============ External Functions ============
@@ -321,8 +315,12 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
         submission.verifiedBy = msg.sender;
 
         if (approved) {
-            // Check if pool has sufficient balance
-            uint256 poolBalance = i_stakingPool.getPoolBalance();
+            // Check if pool has sufficient balance using low-level call
+            (bool success, bytes memory data) = i_stakingPool.staticcall(
+                abi.encodeWithSignature("getPoolBalance()")
+            );
+            require(success, "Failed to get pool balance");
+            uint256 poolBalance = abi.decode(data, (uint256));
             if (poolBalance < quest.rewardAmount) {
                 revert QuestManager__InsufficientPoolBalance();
             }
@@ -333,16 +331,20 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
             quest.currentCompletions++;
             s_totalCompletedQuests++;
 
-            // Distribute reward from staking pool
-            i_stakingPool.distributeReward(submission.player, quest.rewardAmount);
+            // Distribute reward from staking pool using low-level call
+            (bool rewardSuccess,) = i_stakingPool.call(
+                abi.encodeWithSignature("distributeReward(address,uint256)", submission.player, quest.rewardAmount)
+            );
+            require(rewardSuccess, "Failed to distribute reward");
 
-            // Mint NFT if minter is set
-            if (address(s_nftMinter) != address(0)) {
-                try s_nftMinter.mintQuestNFT(submission.player, submission.questId, submission.tweetUrl) returns (
-                    uint256 tokenId
-                ) {
-                    submission.nftTokenId = tokenId;
-                } catch {
+            // Mint NFT if minter is set using low-level call
+            if (s_nftMinter != address(0)) {
+                (bool nftSuccess, bytes memory nftData) = s_nftMinter.call(
+                    abi.encodeWithSignature("mintQuestNFT(address,uint256,string)", submission.player, submission.questId, submission.tweetUrl)
+                );
+                if (nftSuccess && nftData.length > 0) {
+                    submission.nftTokenId = abi.decode(nftData, (uint256));
+                } else {
                     // NFT minting failed, but quest still completes successfully
                     submission.nftTokenId = 0;
                 }
@@ -456,8 +458,8 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
      * @dev Only owner can set NFT minter
      */
     function setNFTMinter(address nftMinter) external onlyOwner {
-        address oldMinter = address(s_nftMinter);
-        s_nftMinter = INFTMinter(nftMinter);
+        address oldMinter = s_nftMinter;
+        s_nftMinter = nftMinter;
         emit NFTMinterSet(oldMinter, nftMinter);
     }
 
@@ -488,6 +490,18 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
         _unpause();
     }
 
+    // ============ Admin Functions (continued) ============
+    /**
+     * @notice Create the default MVP quest (call after deployment)
+     * @dev Only owner can create default quest
+     */
+    function createDefaultQuest() external onlyOwner {
+        // Only create if no quests exist yet
+        require(s_totalQuests == 0, "Default quest already exists");
+        
+        _createDefaultQuest();
+    }
+
     // ============ Internal Functions ============
     /**
      * @notice Create the default MVP quest
@@ -507,12 +521,12 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
         quest.endTime = block.timestamp + (30 days); // 30 days for MVP
         quest.maxCompletions = 1000; // Allow 1000 completions
         quest.currentCompletions = 0;
-        quest.creator = msg.sender;
+        quest.creator = owner();
         quest.createTime = block.timestamp;
 
         s_totalQuests++;
 
-        emit QuestCreated(questId, quest.title, quest.rewardAmount, quest.startTime, quest.endTime, msg.sender);
+        emit QuestCreated(questId, quest.title, quest.rewardAmount, quest.startTime, quest.endTime, owner());
     }
 
     // ============ View Functions ============
@@ -668,7 +682,7 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
             uint256 nextSubmissionId
         )
     {
-        return (address(i_stakingPool), address(s_nftMinter), s_totalQuests, s_nextQuestId, s_nextSubmissionId);
+        return (i_stakingPool, s_nftMinter, s_totalQuests, s_nextQuestId, s_nextSubmissionId);
     }
 
     /**
@@ -678,4 +692,5 @@ contract QuestManager is ReentrancyGuard, Ownable, Pausable {
     function getDefaultQuestId() external pure returns (uint256) {
         return 1; // First quest created is always the default quest
     }
+
 }

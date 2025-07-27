@@ -1,0 +1,1 @@
+"use strict";exports.id=10100,exports.ids=[10100],exports.modules={10100:(a,b,c)=>{c.r(b),c.d(b,{assertInsightEnabled:()=>e});var d=c(64656);async function e(a){let b=await (0,d.T8)();if(!a.every(a=>b.includes(a.id)))throw Error(`Insight is not available for chains ${a.filter(a=>!b.includes(a.id)).map(a=>a.id).join(", ")}`)}}};

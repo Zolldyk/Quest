@@ -428,6 +428,13 @@ contract NFTMinter is ERC721, ERC721URIStorage, Ownable, ReentrancyGuard, Pausab
         return super.supportsInterface(interfaceId);
     }
 
+    /**
+     * @notice Override _update to handle multiple inheritance
+     */
+    function _update(address to, uint256 tokenId, address auth) internal override(ERC721) returns (address) {
+        return super._update(to, tokenId, auth);
+    }
+
     // ============ View Functions ============
     /**
      * @notice Get badge information for a token

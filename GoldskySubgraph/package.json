@@ -1,0 +1,40 @@
+{
+  "name": "quest-defi-goldsky-subgraph",
+  "version": "1.0.0",
+  "description": "Goldsky subgraph for Quest DeFi dApp on Etherlink",
+  "scripts": {
+    "codegen": "graph codegen",
+    "codegen:testnet": "graph codegen subgraph.testnet.yaml",
+    "codegen:mainnet": "graph codegen subgraph.mainnet.yaml",
+    "build": "graph build",
+    "build:testnet": "graph build subgraph.testnet.yaml",
+    "build:mainnet": "graph build subgraph.mainnet.yaml",
+    "deploy": "goldsky subgraph deploy quest-defi/v1.0.0 --path .",
+    "deploy:testnet": "goldsky subgraph deploy quest-defi-testnet/v1.0.0 --path . --config subgraph.testnet.yaml",
+    "deploy:mainnet": "goldsky subgraph deploy quest-defi-mainnet/v1.0.0 --path . --config subgraph.mainnet.yaml",
+    "test": "graph test"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.69.0",
+    "@graphprotocol/graph-ts": "^0.32.0"
+  },
+  "devDependencies": {
+    "matchstick-as": "^0.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/quest-defi-subgraph.git"
+  },
+  "keywords": [
+    "subgraph",
+    "goldsky",
+    "defi",
+    "gaming",
+    "nft",
+    "etherlink",
+    "staking",
+    "quest"
+  ],
+  "author": "Quest Team",
+  "license": "MIT"
+}
