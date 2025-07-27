@@ -39,9 +39,6 @@ export default function HomePage() {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/test-integrations" className="text-gray-700 hover:text-blue-600 font-medium">
-                Test Integration
-              </Link>
               {address && (
                 <>
                   <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
@@ -193,14 +190,18 @@ export default function HomePage() {
             </div>
 
             <div className="text-center mt-12">
-              <Link 
-                href="/test-integrations"
-                className="inline-flex items-center space-x-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-              >
-                <SparklesIcon className="w-5 h-5" />
-                <span>Test Integration</span>
-                <ArrowRightIcon className="w-4 h-4" />
-              </Link>
+              {!address ? (
+                <WalletConnectionV5 variant="default" />
+              ) : (
+                <Link 
+                  href="/dashboard"
+                  className="inline-flex items-center space-x-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+                >
+                  <SparklesIcon className="w-5 h-5" />
+                  <span>Get Started</span>
+                  <ArrowRightIcon className="w-4 h-4" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -244,7 +245,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="https://docs.etherlink.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Documentation</a></li>
                 <li><a href="https://explorer.etherlink.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Block Explorer</a></li>
-                <li><Link href="/test-integrations" className="hover:text-white transition-colors">Test Integration</Link></li>
+                <li><a href="https://github.com/etherlinkcom" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a></li>
               </ul>
             </div>
           </div>
