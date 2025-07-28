@@ -181,24 +181,25 @@ export default function UserDashboard() {
             {/* Tab Navigation */}
             <div className="bg-white rounded-xl shadow-card border border-gray-200 overflow-hidden">
               <div className="border-b border-gray-200">
-                <nav className="flex space-x-8 px-6" aria-label="Tabs">
+                <nav className="flex flex-wrap sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`
-                        flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                        flex items-center py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap
                         ${activeTab === tab.id
                           ? 'border-blue-500 text-blue-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                         }
                       `}
                     >
-                      <tab.icon className="h-4 w-4 mr-2" />
-                      {tab.name}
+                      <tab.icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                      <span className="hidden sm:inline">{tab.name}</span>
+                      <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
                       {tab.count !== undefined && tab.count > 0 && (
                         <span className={`
-                          ml-2 py-0.5 px-2 rounded-full text-xs font-medium
+                          ml-1 sm:ml-2 py-0.5 px-1.5 sm:px-2 rounded-full text-xs font-medium
                           ${activeTab === tab.id 
                             ? 'bg-blue-100 text-blue-600' 
                             : 'bg-gray-100 text-gray-600'
@@ -213,12 +214,11 @@ export default function UserDashboard() {
               </div>
 
               {/* Tab Content */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {activeTab === 'overview' && (
                   <OverviewTab 
                     stats={stats} 
                     recentSubmissions={recentSubmissions}
-                    address={address}
                   />
                 )}
                 {activeTab === 'staking' && (
@@ -228,7 +228,7 @@ export default function UserDashboard() {
                   <SubmissionHistory />
                 )}
                 {activeTab === 'nfts' && (
-                  <NFTBadgesTab address={address} />
+                  <NFTBadgesTab />
                 )}
               </div>
             </div>
@@ -271,26 +271,26 @@ interface OverviewTabProps {
   address?: string;
 }
 
-function OverviewTab({ stats, recentSubmissions, address }: OverviewTabProps) {
+function OverviewTab({ stats, recentSubmissions }: OverviewTabProps) {
   return (
     <div className="space-y-8">
       
       {/* Quick Actions */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <ActionCard
             title="Stake USDC"
             description="Fund the quest reward pool"
             href="/staking"
-            icon={<CurrencyDollarIcon className="h-5 w-5" />}
+            icon={<CurrencyDollarIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
             color="blue"
           />
           <ActionCard
             title="Browse Quests"
             description="Find new quests to complete"
             href="/quests"
-            icon={<TrophyIcon className="h-5 w-5" />}
+            icon={<TrophyIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
             color="green"
           />
           <ActionCard
@@ -298,7 +298,7 @@ function OverviewTab({ stats, recentSubmissions, address }: OverviewTabProps) {
             description="See your earned badges"
             href="#"
             onClick={() => {}} // Handle NFT gallery
-            icon={<StarIcon className="h-5 w-5" />}
+            icon={<StarIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
             color="purple"
           />
         </div>
@@ -382,15 +382,15 @@ function ActionCard({ title, description, href, onClick, icon, color }: ActionCa
     <Component
       {...props}
       className={`
-        block p-4 border-2 rounded-lg transition-colors hover:bg-gray-50
+        block p-3 sm:p-4 border-2 rounded-lg transition-colors hover:bg-gray-50
         ${colorClasses[color]}
       `}
     >
       <div className="flex items-center mb-2">
-        {icon}
-        <h4 className="ml-2 font-medium text-gray-900">{title}</h4>
+        <div className="flex-shrink-0">{icon}</div>
+        <h4 className="ml-2 font-medium text-gray-900 text-sm sm:text-base truncate">{title}</h4>
       </div>
-      <p className="text-sm text-gray-600">{description}</p>
+      <p className="text-xs sm:text-sm text-gray-600">{description}</p>
     </Component>
   );
 }
@@ -446,11 +446,7 @@ function ActivityItem({ submission }: ActivityItemProps) {
 }
 
 // ============ NFT Badges Tab ============
-interface NFTBadgesTabProps {
-  address?: string;
-}
-
-function NFTBadgesTab({ address }: NFTBadgesTabProps) {
+function NFTBadgesTab() {
   // This would integrate with NFTGallery component
   return (
     <div className="text-center py-8">

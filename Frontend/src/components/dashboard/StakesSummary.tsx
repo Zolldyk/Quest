@@ -490,26 +490,26 @@ export default function StakesSummary() {
       </div>
 
       {/* Pool Information */}
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Pool Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600">
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Pool Information</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="text-center space-y-1">
+            <p className="text-xl sm:text-2xl font-bold text-blue-600 break-all">
               {formatTokenAmount(stakingData.poolStats?.totalPoolBalance, USDC_DECIMALS)}
             </p>
-            <p className="text-sm text-gray-600">Total Pool Balance (USDC)</p>
+            <p className="text-xs sm:text-sm text-gray-600">Total Pool Balance (USDC)</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">
+          <div className="text-center space-y-1">
+            <p className="text-xl sm:text-2xl font-bold text-green-600">
               {stakingData.poolStats?.totalStakers.toString()}
             </p>
-            <p className="text-sm text-gray-600">Total Stakers</p>
+            <p className="text-xs sm:text-sm text-gray-600">Total Stakers</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600">
+          <div className="text-center space-y-1 sm:col-span-2 lg:col-span-1">
+            <p className="text-xl sm:text-2xl font-bold text-purple-600 break-all">
               {formatTokenAmount(stakingData.poolStats?.totalRewardsDistributed, USDC_DECIMALS)}
             </p>
-            <p className="text-sm text-gray-600">Rewards Distributed (USDC)</p>
+            <p className="text-xs sm:text-sm text-gray-600">Rewards Distributed (USDC)</p>
           </div>
         </div>
       </div>
@@ -534,20 +534,20 @@ function StakingStatCard({ title, value, icon, color, subtitle }: StakingStatCar
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-card border border-gray-200 p-6">
-      <div className="flex items-center mb-2">
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
+    <div className="bg-white rounded-xl shadow-card border border-gray-200 p-4 sm:p-6">
+      <div className="flex items-center mb-2 space-x-3">
+        <div className={`p-2 rounded-lg flex-shrink-0 ${colorClasses[color]}`}>
           {icon}
         </div>
-        <div className="ml-3">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className={`text-xl font-bold ${colorClasses[color].split(' ')[0]}`}>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{title}</p>
+          <p className={`text-base sm:text-xl font-bold ${colorClasses[color].split(' ')[0]} truncate`}>
             {value}
           </p>
         </div>
       </div>
       {subtitle && (
-        <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+        <p className="text-xs text-gray-500 mt-1 truncate">{subtitle}</p>
       )}
     </div>
   );

@@ -109,7 +109,7 @@ const getContractAddresses = () => {
 
   // Log missing addresses but don't throw errors
   const missingAddresses = Object.entries(addresses)
-    .filter(([, value]) => !value)
+    .filter(([, value]) => !value || value.trim() === '')
     .map(([key]) => key);
 
   if (missingAddresses.length > 0) {
@@ -690,12 +690,12 @@ export function useContractValidation() {
   const addresses = getContractAddresses();
   
   const isValid = useMemo(() => {
-    return Object.values(addresses).every(addr => addr && addr !== "");
+    return Object.values(addresses).every(addr => addr && addr.trim() !== "" && addr !== "undefined");
   }, [addresses]);
 
   const missingAddresses = useMemo(() => {
     return Object.entries(addresses)
-      .filter(([, addr]) => !addr || addr === "")
+      .filter(([, addr]) => !addr || addr.trim() === "" || addr === "undefined")
       .map(([key]) => key);
   }, [addresses]);
 
