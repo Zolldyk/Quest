@@ -1,9 +1,7 @@
 'use client';
 
 // ============ Imports ============
-import { ThirdwebProvider, ConnectButton } from 'thirdweb/react';
-import { createThirdwebClient } from 'thirdweb';
-import { createWallet } from 'thirdweb/wallets';
+import { ThirdwebProvider } from 'thirdweb/react';
 import { defineChain } from 'thirdweb/chains';
 import { ReactNode } from 'react';
 
@@ -62,37 +60,7 @@ const getActiveChain = () => {
   return forceMainnet ? ETHERLINK_MAINNET : ETHERLINK_TESTNET;
 };
 
-// ============ Client Configuration ============
-const getClient = () => {
-  const clientId = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID;
-  
-  if (!clientId) {
-    console.warn('NEXT_PUBLIC_THIRDWEB_CLIENT_ID not found. Using development client ID.');
-    return createThirdwebClient({
-      clientId: 'your-client-id-here'
-    });
-  }
-  
-  return createThirdwebClient({
-    clientId: clientId
-  });
-};
 
-// ============ Wallet Configuration ============
-const wallets = [
-  createWallet('io.metamask'),
-  createWallet('com.coinbase.wallet'),
-  createWallet('me.rainbow'),
-  createWallet('io.rabby'),
-];
-
-// ============ dApp Configuration ============
-const dAppConfig = {
-  name: 'Quest DApp',
-  description: 'DeFi-Powered NFT Quest Game on Etherlink',
-  url: 'https://quest.etherlink.com',
-  icons: ['https://quest.etherlink.com/logo.png'],
-};
 
 /**
  * @title CustomThirdwebProvider  
@@ -100,8 +68,6 @@ const dAppConfig = {
  * @dev Provides blockchain connection and wallet management for the Quest DApp
  */
 export default function CustomThirdwebProvider({ children }: CustomThirdwebProviderProps) {
-  const client = getClient();
-  
   return (
     <ThirdwebProvider>
       {children}

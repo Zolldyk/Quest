@@ -68,10 +68,6 @@ export default function WalletConnectionV5({
             titleIcon: "/images/logo.png",
             showThirdwebBranding: false,
           }}
-          accountAbstraction={{
-            chain: activeChain,
-            sponsorGas: false,
-          }}
         />
       </div>
     );
@@ -159,10 +155,6 @@ export default function WalletConnectionV5({
             padding: '6px 12px',
             fontSize: '14px',
           }
-        }}
-        accountAbstraction={{
-          chain: activeChain,
-          sponsorGas: false,
         }}
       />
     </div>
