@@ -8,12 +8,12 @@ import {
   TrophyIcon,
   ChartBarIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ClockIcon,
   StarIcon,
 } from '@heroicons/react/24/outline';
 import { useStakingPool, useQuestManager, useNFTMinter, formatTokenAmount } from '../../hooks/useContracts';
 import LoadingSpinner, { CardSkeleton } from '../ui/LoadingSpinner';
+import { toast } from 'react-hot-toast';
 
 // ============ Types ============
 interface PoolStatistics {
@@ -30,11 +30,6 @@ interface PoolStatistics {
   successRate: number;
 }
 
-interface TrendData {
-  value: number;
-  change: number;
-  isPositive: boolean;
-}
 
 /**
  * @title PoolStats
@@ -128,19 +123,26 @@ export default function PoolStats() {
   
   // Mock trend data - in production, this would come from historical data
   const trendData = useMemo(() => ({
-    poolBalance: { value: parseFloat(statistics?.totalPoolBalance || '0'), change: 12.5, isPositive: true },
-    stakers: { value: statistics?.totalStakers || 0, change: 8.3, isPositive: true },
-    rewards: { value: parseFloat(statistics?.totalRewardsDistributed || '0'), change: 15.7, isPositive: true },
-    successRate: { value: statistics?.successRate || 0, change: -2.1, isPositive: false },
-  }), [statistics]);
+    poolBalance: { change: 12.5, isPositive: true },
+    stakers: { change: 8.3, isPositive: true },
+    rewards: { change: 15.7, isPositive: true },
+    successRate: { change: -2.1, isPositive: false },
+  }), []);
 
   // ============ Handlers ============
   
   const handleRefreshStats = async () => {
     setIsLoading(true);
-    await Promise.all([refetchPoolBalance(), refetchPoolStats()]);
-    setLastUpdated(new Date());
-    setIsLoading(false);
+    try {
+      await Promise.all([refetchPoolBalance(), refetchPoolStats()]);
+      setLastUpdated(new Date());
+      toast.success('Pool statistics refreshed successfully!');
+    } catch (error) {
+      console.error('Error refreshing stats:', error);
+      toast.error('Failed to refresh statistics');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ============ Loading State ============
@@ -166,169 +168,121 @@ export default function PoolStats() {
 
   // ============ JSX Return ============
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="w-full">{/* Removed unnecessary max-width and padding for sidebar usage */}
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Pool Statistics</h1>
-          <p className="text-gray-600">
-            Real-time metrics and analytics for the Quest ecosystem
-          </p>
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-sm text-gray-500">
+          Updated: {lastUpdated.toLocaleTimeString()}
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-500">
-            Last updated: {lastUpdated.toLocaleTimeString()}
-          </div>
-          <button
-            onClick={handleRefreshStats}
-            disabled={isLoading}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-          >
-            {isLoading ? (
-              <LoadingSpinner size="sm" color="white" className="mr-2" />
-            ) : (
-              <ArrowTrendingUpIcon className="h-4 w-4 mr-2" />
-            )}
-            Refresh
-          </button>
-        </div>
+        <button
+          onClick={handleRefreshStats}
+          disabled={isLoading}
+          className="flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+        >
+          {isLoading ? (
+            <LoadingSpinner size="sm" color="white" className="mr-1" />
+          ) : (
+            <ArrowTrendingUpIcon className="h-3 w-3 mr-1" />
+          )}
+          Refresh
+        </button>
       </div>
 
-      {/* Main Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Total Pool Balance"
-          value={`${statistics?.totalPoolBalance || '0'} USDC`}
-          icon={<CurrencyDollarIcon className="h-6 w-6" />}
-          trend={trendData.poolBalance}
-          color="green"
-        />
-        <StatCard
-          title="Total Stakers"
-          value={statistics?.totalStakers?.toString() || '0'}
-          icon={<UsersIcon className="h-6 w-6" />}
-          trend={trendData.stakers}
-          color="blue"
-        />
-        <StatCard
-          title="Rewards Distributed"
-          value={`${statistics?.totalRewardsDistributed || '0'} USDC`}
-          icon={<TrophyIcon className="h-6 w-6" />}
-          trend={trendData.rewards}
-          color="purple"
-        />
-        <StatCard
-          title="Success Rate"
-          value={`${(statistics?.successRate ?? 0).toFixed(1)}%`}
-          icon={<ChartBarIcon className="h-6 w-6" />}
-          trend={trendData.successRate}
-          color="orange"
-        />
-      </div>
-
-      {/* Detailed Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        
-        {/* Pool Analytics */}
-        <div className="bg-white rounded-xl shadow-card border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Pool Analytics</h3>
-          
-          <div className="space-y-4">
-            <MetricRow
-              label="Average Stake Amount"
-              value={`${statistics?.averageStakeAmount || '0'} USDC`}
-              description="Average amount staked per user"
-            />
-            <MetricRow
-              label="Pool Utilization Rate"
-              value={`${(statistics?.poolUtilizationRate ?? 0).toFixed(1)}%`}
-              description="Percentage of pool used for rewards"
-            />
-            <MetricRow
-              label="Active Stakers"
-              value={statistics?.totalStakers?.toString() || '0'}
-              description="Users currently staking in the pool"
-            />
-            <MetricRow
-              label="Available Balance"
-              value={`${(parseFloat(statistics?.totalPoolBalance || '0') - parseFloat(statistics?.totalRewardsDistributed || '0')).toFixed(2)} USDC`}
-              description="Remaining balance for future rewards"
-            />
+      {/* Key Metrics - Compact Layout */}
+      <div className="space-y-3 mb-4">
+        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center">
+            <CurrencyDollarIcon className="h-4 w-4 text-green-600 mr-2" />
+            <span className="text-sm font-medium text-gray-700">Pool Balance</span>
           </div>
-        </div>
-
-        {/* Quest Analytics */}
-        <div className="bg-white rounded-xl shadow-card border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Quest Analytics</h3>
-          
-          <div className="space-y-4">
-            <MetricRow
-              label="Total Quests Created"
-              value={statistics?.totalQuests?.toString() || '0'}
-              description="All-time quest campaigns"
-            />
-            <MetricRow
-              label="Active Quests"
-              value={statistics?.activeQuests?.toString() || '0'}
-              description="Currently available quests"
-            />
-            <MetricRow
-              label="Total Submissions"
-              value={statistics?.totalSubmissions?.toString() || '0'}
-              description="All quest submissions received"
-            />
-            <MetricRow
-              label="Completion Rate"
-              value={`${(statistics?.successRate ?? 0).toFixed(1)}%`}
-              description="Percentage of approved submissions"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* NFT & Rewards Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* NFT Stats */}
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 p-6">
-          <div className="flex items-center mb-4">
-            <StarIcon className="h-6 w-6 text-purple-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">NFT Badges</h3>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-purple-600 mb-2">
-              {statistics?.totalNFTsMinted || 0}
+          <div className="text-right">
+            <div className="text-sm font-bold text-green-600">
+              {statistics?.totalPoolBalance || '0'} USDC
             </div>
-            <div className="text-sm text-gray-600">Total Badges Minted</div>
-          </div>
-        </div>
-
-        {/* Quest Activity */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
-          <div className="flex items-center mb-4">
-            <TrophyIcon className="h-6 w-6 text-green-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">Quest Activity</h3>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">
-              {statistics?.completedSubmissions || 0}
+            <div className="text-xs text-gray-500">
+              {trendData.poolBalance.isPositive ? '↗' : '↘'} {Math.abs(trendData.poolBalance.change)}%
             </div>
-            <div className="text-sm text-gray-600">Quests Completed</div>
           </div>
         </div>
-
-        {/* System Health */}
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-6">
-          <div className="flex items-center mb-4">
-            <ClockIcon className="h-6 w-6 text-blue-600 mr-3" />
-            <h3 className="text-lg font-semibold text-gray-900">System Health</h3>
+        
+        <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center">
+            <UsersIcon className="h-4 w-4 text-blue-600 mr-2" />
+            <span className="text-sm font-medium text-gray-700">Total Stakers</span>
           </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600 mb-2">
+          <div className="text-right">
+            <div className="text-sm font-bold text-blue-600">
+              {statistics?.totalStakers?.toString() || '0'}
+            </div>
+            <div className="text-xs text-gray-500">
+              {trendData.stakers.isPositive ? '↗' : '↘'} {Math.abs(trendData.stakers.change)}%
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
+          <div className="flex items-center">
+            <TrophyIcon className="h-4 w-4 text-purple-600 mr-2" />
+            <span className="text-sm font-medium text-gray-700">Rewards Paid</span>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-bold text-purple-600">
+              {statistics?.totalRewardsDistributed || '0'} USDC
+            </div>
+            <div className="text-xs text-gray-500">
+              {trendData.rewards.isPositive ? '↗' : '↘'} {Math.abs(trendData.rewards.change)}%
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="flex items-center">
+            <ChartBarIcon className="h-4 w-4 text-orange-600 mr-2" />
+            <span className="text-sm font-medium text-gray-700">Success Rate</span>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-bold text-orange-600">
+              {(statistics?.successRate ?? 0).toFixed(1)}%
+            </div>
+            <div className="text-xs text-gray-500">
+              {trendData.successRate.isPositive ? '↗' : '↘'} {Math.abs(trendData.successRate.change)}%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="text-center p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+          <StarIcon className="h-4 w-4 text-purple-600 mx-auto mb-1" />
+          <div className="text-lg font-bold text-purple-600">
+            {statistics?.totalNFTsMinted || 0}
+          </div>
+          <div className="text-xs text-gray-600">NFT Badges</div>
+        </div>
+
+        <div className="text-center p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+          <TrophyIcon className="h-4 w-4 text-green-600 mx-auto mb-1" />
+          <div className="text-lg font-bold text-green-600">
+            {statistics?.completedSubmissions || 0}
+          </div>
+          <div className="text-xs text-gray-600">Completed</div>
+        </div>
+      </div>
+
+      {/* System Status */}
+      <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <ClockIcon className="h-4 w-4 text-blue-600 mr-2" />
+            <span className="text-sm font-medium text-gray-700">System Health</span>
+          </div>
+          <div className="text-right">
+            <div className="text-lg">
               {(statistics?.poolUtilizationRate ?? 0) < 80 ? '🟢' : (statistics?.poolUtilizationRate ?? 0) < 95 ? '🟡' : '🔴'}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-xs text-gray-600">
               {(statistics?.poolUtilizationRate ?? 0) < 80 ? 'Healthy' : 
                (statistics?.poolUtilizationRate ?? 0) < 95 ? 'Moderate' : 'High Usage'}
             </div>
@@ -339,68 +293,4 @@ export default function PoolStats() {
   );
 }
 
-// ============ Stat Card Component ============
-interface StatCardProps {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  trend: TrendData;
-  color: 'green' | 'blue' | 'purple' | 'orange';
-}
-
-function StatCard({ title, value, icon, trend, color }: StatCardProps) {
-  const colorClasses = {
-    green: 'text-green-600 bg-green-50 border-green-200',
-    blue: 'text-blue-600 bg-blue-50 border-blue-200',
-    purple: 'text-purple-600 bg-purple-50 border-purple-200',
-    orange: 'text-orange-600 bg-orange-50 border-orange-200',
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-card border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-          {icon}
-        </div>
-        <div className={`flex items-center text-sm font-medium ${
-          trend.isPositive ? 'text-green-600' : 'text-red-600'
-        }`}>
-          {trend.isPositive ? (
-            <ArrowTrendingUpIcon className="h-4 w-4 mr-1" />
-          ) : (
-            <ArrowTrendingDownIcon className="h-4 w-4 mr-1" />
-          )}
-          {Math.abs(trend.change)}%
-        </div>
-      </div>
-      
-      <div className="mb-2">
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
-        <div className="text-sm font-medium text-gray-600">{title}</div>
-      </div>
-      
-      <div className="text-xs text-gray-500">
-        {trend.isPositive ? 'Increased' : 'Decreased'} from last period
-      </div>
-    </div>
-  );
-}
-
-// ============ Metric Row Component ============
-interface MetricRowProps {
-  label: string;
-  value: string;
-  description: string;
-}
-
-function MetricRow({ label, value, description }: MetricRowProps) {
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-      <div className="flex-1">
-        <div className="font-medium text-gray-900">{label}</div>
-        <div className="text-sm text-gray-500">{description}</div>
-      </div>
-      <div className="font-bold text-gray-900">{value}</div>
-    </div>
-  );
-}
+// Removed unused StatCard and MetricRow components for cleaner sidebar layout

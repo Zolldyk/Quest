@@ -9,6 +9,7 @@ import { UserIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
+import ContractStatus from '../components/ui/ContractStatus';
 
 // Dynamically import components that use contracts to avoid SSR issues
 const UserDashboard = dynamic(() => import('../components/dashboard/UserDashboard'), {
@@ -102,6 +103,9 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Contract Status */}
+              <ContractStatus />
 
               {/* Main Dashboard Content */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

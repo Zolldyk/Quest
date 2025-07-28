@@ -1,6 +1,7 @@
 // ============ Imports ============
 'use client';
 
+import { useState } from 'react';
 import { useActiveAccount } from 'thirdweb/react';
 import QuestDisplay from '../components/quests/QuestDisplay';
 import QuestSubmissionForm from '../components/quests/QuestSubmissionForm';
@@ -18,6 +19,7 @@ export default function QuestsPage() {
   // ============ Hooks ============
   const account = useActiveAccount();
   const isConnected = !!account;
+  const [showSubmissionForm, setShowSubmissionForm] = useState(false);
 
   return (
     <>
@@ -74,41 +76,53 @@ export default function QuestsPage() {
                 </div>
               </div>
 
-              {/* Quest Submission */}
+              {/* Quest Action Button */}
               {isConnected && (
                 <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-900">
-                      Submit Quest
+                      Ready to Submit?
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
-                      Provide proof of quest completion to claim your reward
+                      Complete the quest and submit your proof to earn rewards
                     </p>
                   </div>
                   <div className="p-6">
-                    <QuestSubmissionForm 
-                      quest={{
-                        questId: { toNumber: () => 1 },
-                        title: "Twitter Quest",
-                        description: "Share about Quest dApp on Twitter",
-                        requirements: "Post with #EtherlinkQuest",
-                        rewardAmount: { toNumber: () => 1000000 },
-                        isActive: true,
-                        startTime: { toNumber: () => Date.now() },
-                        endTime: { toNumber: () => Date.now() + 86400000 },
-                        maxCompletions: { toNumber: () => 1000 },
-                        currentCompletions: { toNumber: () => 0 },
-                        creator: "0x0000000000000000000000000000000000000000",
-                        createTime: { toNumber: () => Date.now() }
-                      } as any}
-                      onClose={() => {}}
-                      onSuccess={() => {
-                        // Refresh page or show success message
-                        window.location.reload();
-                      }}
-                    />
+                    <button
+                      onClick={() => setShowSubmissionForm(true)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+                    >
+                      <TrophyIcon className="h-5 w-5 mr-2" />
+                      Submit Quest Proof
+                    </button>
                   </div>
                 </div>
+              )}
+              
+              {/* Quest Submission Form Modal */}
+              {showSubmissionForm && (
+                <QuestSubmissionForm 
+                  quest={{
+                    questId: BigInt(1),
+                    title: "Twitter Quest",
+                    description: "Share about Quest dApp on Twitter",
+                    requirements: "Post with #EtherlinkQuest hashtag and mention @QuestDapp",
+                    rewardAmount: BigInt(1000000), // 1 USDC in microUSDC (6 decimals)
+                    isActive: true,
+                    startTime: BigInt(Date.now()),
+                    endTime: BigInt(Date.now() + 86400000),
+                    maxCompletions: BigInt(1000),
+                    currentCompletions: BigInt(0),
+                    creator: "0x0000000000000000000000000000000000000000",
+                    createTime: BigInt(Date.now())
+                  }}
+                  onClose={() => setShowSubmissionForm(false)}
+                  onSuccess={() => {
+                    setShowSubmissionForm(false);
+                    // Show success message
+                    alert('Quest submitted successfully! Check your dashboard for verification status.');
+                  }}
+                />
               )}
             </div>
 

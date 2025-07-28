@@ -149,9 +149,22 @@ export function useStakingPool() {
     if (!contract || !address || !stakingPool) return null;
     
     try {
-      const result = await refetchPoolBalance(); // Use v5 pattern
-      // In v5, you'd need to implement the actual read call
-      // This is a compatibility layer for now
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "getStakerInfo",
+        params: [address]
+      });
+      
+      if (result && Array.isArray(result) && result.length >= 4) {
+        return {
+          stakedAmount: result[0] as bigint,
+          stakeTimestamp: result[1] as bigint,
+          lastUpdateTime: result[2] as bigint,
+          isActive: result[3] as boolean,
+        };
+      }
+      
       return {
         stakedAmount: BigInt(0),
         stakeTimestamp: BigInt(0),
@@ -160,9 +173,14 @@ export function useStakingPool() {
       };
     } catch (error) {
       console.error("Error fetching staker info:", error);
-      return null;
+      return {
+        stakedAmount: BigInt(0),
+        stakeTimestamp: BigInt(0),
+        lastUpdateTime: BigInt(0),
+        isActive: false,
+      };
     }
-  }, [contract, refetchPoolBalance, stakingPool]);
+  }, [contract, stakingPool]);
 
   const stakeTokens = useCallback(async (amount: bigint) => {
     if (!contract || !stakingPool) throw new Error("Contract not available or not configured");
@@ -297,11 +315,16 @@ export function useQuestManager() {
     if (!contract || !playerAddress || !questManager) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      return [];
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "getPlayerSubmissions",
+        params: [playerAddress]
+      });
+      return result as bigint[];
     } catch (error) {
       console.error("Error fetching player submissions:", error);
-      return null;
+      return [];
     }
   }, [contract, questManager]);
 
@@ -427,11 +450,16 @@ export function useNFTMinter() {
     if (!contract || !userAddress || !nftMinter) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      return [];
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "getUserBadges",
+        params: [userAddress]
+      });
+      return result as bigint[];
     } catch (error) {
       console.error("Error fetching user badges:", error);
-      return null;
+      return [];
     }
   }, [contract, nftMinter]);
 
@@ -512,11 +540,16 @@ export function useUSDCToken() {
     if (!contract || !address || !usdcToken) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      return BigInt(0);
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "balanceOf",
+        params: [address]
+      });
+      return result as bigint;
     } catch (error) {
       console.error("Error fetching USDC balance:", error);
-      return null;
+      return BigInt(0);
     }
   }, [contract, usdcToken]);
 
@@ -524,11 +557,16 @@ export function useUSDCToken() {
     if (!contract || !owner || !spender || !usdcToken) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      return BigInt(0);
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "allowance",
+        params: [owner, spender]
+      });
+      return result as bigint;
     } catch (error) {
       console.error("Error fetching allowance:", error);
-      return null;
+      return BigInt(0);
     }
   }, [contract, usdcToken]);
 

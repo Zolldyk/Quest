@@ -7,7 +7,7 @@ import { createThirdwebClient, getContract } from 'thirdweb';
 import { defineChain } from 'thirdweb/chains';
 import { useActiveAccount, useActiveWallet, useConnect } from 'thirdweb/react';
 import { readContract, prepareContractCall, sendTransaction } from 'thirdweb';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 // ============ Client Configuration ============
 export const client = createThirdwebClient({
@@ -125,27 +125,45 @@ export function useContract(address: string, abi?: any) {
  * Hook for reading contract data (v4 compatibility)
  */
 export function useContractRead(contract: any, functionName: string, args?: any[]) {
-  // Note: In v5, you'll need to implement proper state management
-  // for now, this is a placeholder that returns the structure v4 expects
-  return {
-    data: undefined,
-    isLoading: false,
-    error: null,
-    refetch: async () => {
-      if (!contract) return;
-      
-      try {
-        const result = await readContract({
-          contract,
-          method: functionName,
-          params: args || []
-        });
-        return result;
-      } catch (error) {
-        console.error('Contract read error:', error);
-        throw error;
-      }
+  const [data, setData] = useState<any>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  const refetch = useCallback(async () => {
+    if (!contract) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const result = await readContract({
+        contract,
+        method: functionName,
+        params: args || []
+      });
+      setData(result);
+      return result;
+    } catch (error) {
+      console.error('Contract read error:', error);
+      setError(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
+  }, [contract, functionName, args]);
+
+  // Auto-fetch on mount and when dependencies change
+  useEffect(() => {
+    if (contract) {
+      refetch().catch(console.error);
+    }
+  }, [refetch, contract]);
+
+  return {
+    data,
+    isLoading,
+    error,
+    refetch
   };
 }
 
