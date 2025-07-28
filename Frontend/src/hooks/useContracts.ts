@@ -1,5 +1,5 @@
 // ============ Imports ============
-import { useContract, useContractRead, useContractWrite, useAddress } from "../hooks/useThirdwebV5";
+import { useContract, useContractRead, useContractWrite } from "../hooks/useThirdwebV5";
 import { useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 
@@ -107,14 +107,14 @@ const getContractAddresses = () => {
     usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '',
   };
 
-  // Log missing addresses but don't throw errors
+  // Validate addresses
   const missingAddresses = Object.entries(addresses)
-    .filter(([, value]) => !value || value.trim() === '')
+    .filter(([, value]) => !value || value.trim() === '' || value === 'undefined')
     .map(([key]) => key);
 
-  if (missingAddresses.length > 0) {
+  if (missingAddresses.length > 0 && process.env.NODE_ENV === 'development') {
     console.warn(`Missing contract addresses: ${missingAddresses.join(', ')}`);
-    console.warn('Some features may not work properly. Please check your environment variables.');
+    console.warn('Please check your environment variables.');
   }
 
   return addresses;

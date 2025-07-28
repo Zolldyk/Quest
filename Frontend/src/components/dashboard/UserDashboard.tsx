@@ -11,9 +11,8 @@ import {
   EyeIcon,
   CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
-import { useContracts, formatTokenAmount, Quest, QuestSubmission } from '../../hooks/useContracts';
-import { WalletProtected } from '../wallet/WalletConnection';
-import LoadingSpinner, { CardSkeleton } from '../ui/LoadingSpinner';
+import { useContracts, formatTokenAmount, QuestSubmission } from '../../hooks/useContracts';
+import { CardSkeleton } from '../ui/LoadingSpinner';
 import StakesSummary from './StakesSummary';
 import SubmissionHistory from './SubmissionHistory';
 
@@ -49,7 +48,6 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [recentSubmissions, setRecentSubmissions] = useState<QuestSubmission[]>([]);
-  const [completedQuests, setCompletedQuests] = useState<Quest[]>([]);
 
   // ============ Tab Configuration ============
   const tabs: TabProps[] = [
@@ -124,16 +122,7 @@ export default function UserDashboard() {
 
   // ============ JSX Return ============
   return (
-    <WalletProtected>
-      <div className="max-w-7xl mx-auto p-6">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">
-            Track your staking, quest completions, and rewards
-          </p>
-        </div>
+    <div className="space-y-6">
 
         {isLoading ? (
           <div className="space-y-6">
@@ -147,32 +136,32 @@ export default function UserDashboard() {
         ) : (
           <>
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6">
               <StatCard
                 title="Total Staked"
                 value={`${stats?.totalStaked || '0'} USDC`}
-                icon={<CurrencyDollarIcon className="h-6 w-6 text-blue-600" />}
+                icon={<CurrencyDollarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />}
                 bgColor="bg-blue-50"
                 textColor="text-blue-600"
               />
               <StatCard
                 title="Total Earned"
                 value={`${stats?.totalEarned || '0'} USDC`}
-                icon={<TrophyIcon className="h-6 w-6 text-green-600" />}
+                icon={<TrophyIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />}
                 bgColor="bg-green-50"
                 textColor="text-green-600"
               />
               <StatCard
                 title="Quests Completed"
                 value={stats?.questsCompleted?.toString() || '0'}
-                icon={<ChartBarIcon className="h-6 w-6 text-purple-600" />}
+                icon={<ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />}
                 bgColor="bg-purple-50"
                 textColor="text-purple-600"
               />
               <StatCard
                 title="NFT Badges"
                 value={stats?.nftBadges?.toString() || '0'}
-                icon={<StarIcon className="h-6 w-6 text-orange-600" />}
+                icon={<StarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />}
                 bgColor="bg-orange-50"
                 textColor="text-orange-600"
               />
@@ -234,8 +223,7 @@ export default function UserDashboard() {
             </div>
           </>
         )}
-      </div>
-    </WalletProtected>
+    </div>
   );
 }
 
@@ -250,14 +238,14 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, bgColor, textColor }: StatCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-card border border-gray-200 p-6">
-      <div className="flex items-center">
-        <div className={`${bgColor} p-3 rounded-lg`}>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        <div className={`${bgColor} p-1.5 sm:p-2 rounded-lg flex-shrink-0`}>
           {icon}
         </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className={`text-2xl font-bold ${textColor}`}>{value}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{title}</p>
+          <p className={`text-sm sm:text-lg lg:text-xl font-bold ${textColor} truncate`}>{value}</p>
         </div>
       </div>
     </div>

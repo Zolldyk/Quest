@@ -286,33 +286,33 @@ export default function StakesSummary() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-gray-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+      <div className="bg-gray-50 rounded-xl p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {/* Action Selection */}
           <div>
             <div className="flex mb-4">
               <button
                 onClick={() => setQuickAction('stake')}
-                className={`flex-1 py-2 px-4 rounded-l-lg border-2 font-medium transition-colors ${
+                className={`flex-1 py-2 px-3 sm:px-4 rounded-l-lg border-2 font-medium transition-colors text-sm sm:text-base ${
                   quickAction === 'stake'
                     ? 'bg-green-50 text-green-700 border-green-200'
                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <PlusIcon className="h-4 w-4 inline mr-2" />
+                <PlusIcon className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />
                 Stake
               </button>
               <button
                 onClick={() => setQuickAction('unstake')}
-                className={`flex-1 py-2 px-4 rounded-r-lg border-2 border-l-0 font-medium transition-colors ${
+                className={`flex-1 py-2 px-3 sm:px-4 rounded-r-lg border-2 border-l-0 font-medium transition-colors text-sm sm:text-base ${
                   quickAction === 'unstake'
                     ? 'bg-red-50 text-red-700 border-red-200'
                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <MinusIcon className="h-4 w-4 inline mr-2" />
+                <MinusIcon className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1 sm:mr-2" />
                 Unstake
               </button>
             </div>
@@ -324,14 +324,14 @@ export default function StakesSummary() {
                   type="number"
                   value={quickAmount}
                   onChange={(e) => setQuickAmount(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-16"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12 sm:pr-16 text-sm sm:text-base"
                   placeholder={`Amount to ${quickAction}`}
                   min="0"
                   step="0.01"
                 />
                 <button
                   onClick={handleMaxAmount}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-xs sm:text-sm text-blue-600 hover:text-blue-800 font-medium"
                 >
                   MAX
                 </button>
@@ -343,7 +343,7 @@ export default function StakesSummary() {
                   <button
                     onClick={handleApprove}
                     disabled={!quickAmount || isApproving}
-                    className="w-full bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+                    className="w-full bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition-colors flex items-center justify-center text-sm sm:text-base"
                   >
                     {isApproving ? (
                       <>
@@ -359,7 +359,7 @@ export default function StakesSummary() {
                 <button
                   onClick={handleQuickAction}
                   disabled={!canExecuteAction || needsApproval || isStaking || isUnstaking}
-                  className={`w-full font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center ${
+                  className={`w-full font-medium py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition-colors flex items-center justify-center text-sm sm:text-base ${
                     quickAction === 'stake'
                       ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white'
                       : 'bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white'
@@ -387,11 +387,11 @@ export default function StakesSummary() {
 
           {/* Action Info */}
           <div className="space-y-4">
-            <div className="bg-white rounded-lg p-4 border border-gray-200">
-              <h4 className="font-medium text-gray-900 mb-3">
+            <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3 text-sm sm:text-base">
                 {quickAction === 'stake' ? 'Staking Info' : 'Unstaking Info'}
               </h4>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-xs sm:text-sm">
                 {quickAction === 'stake' ? (
                   <>
                     <div className="flex justify-between">
@@ -438,10 +438,10 @@ export default function StakesSummary() {
             </div>
 
             {/* Additional Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
               <div className="flex items-start">
-                <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-                <div className="text-sm text-blue-800">
+                <InformationCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 mr-2 sm:mr-3 flex-shrink-0" />
+                <div className="text-xs sm:text-sm text-blue-800">
                   {quickAction === 'stake' ? (
                     <div>
                       <p className="font-medium mb-1">Staking Benefits</p>

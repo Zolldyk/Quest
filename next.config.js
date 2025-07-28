@@ -22,7 +22,10 @@ const nextConfig = {
   
     // Environment variables validation
     env: {
-      CUSTOM_KEY: process.env.CUSTOM_KEY,
+      NEXT_PUBLIC_STAKING_POOL_ADDRESS: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+      NEXT_PUBLIC_QUEST_MANAGER_ADDRESS: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+      NEXT_PUBLIC_NFT_MINTER_ADDRESS: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+      NEXT_PUBLIC_USDC_TOKEN_ADDRESS: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
     },
   
     // Webpack configuration for Web3 compatibility (simplified for v5)

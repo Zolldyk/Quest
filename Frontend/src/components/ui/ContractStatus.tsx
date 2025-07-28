@@ -7,7 +7,7 @@ import { ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/ou
  * Component to display contract configuration status
  */
 export default function ContractStatus() {
-  const { isValid, missingAddresses, addresses } = useContractValidation();
+  const { isValid, missingAddresses } = useContractValidation();
 
   if (isValid) {
     return (
