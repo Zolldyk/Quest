@@ -264,52 +264,68 @@ export function useQuestManager() {
     if (!contract || !questManager) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      const result = await refetchActiveQuests();
-      // This is a compatibility placeholder
-      return {
-        questId: BigInt(questId),
-        title: "Sample Quest",
-        description: "Sample description",
-        requirements: "Sample requirements",
-        rewardAmount: BigInt(0),
-        isActive: true,
-        startTime: BigInt(0),
-        endTime: BigInt(0),
-        maxCompletions: BigInt(0),
-        currentCompletions: BigInt(0),
-        creator: "0x0000000000000000000000000000000000000000",
-        createTime: BigInt(0),
-      };
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "getQuest",
+        params: [questId]
+      });
+      
+      if (result && Array.isArray(result) && result.length >= 12) {
+        return {
+          questId: result[0] as bigint,
+          title: result[1] as string,
+          description: result[2] as string,
+          requirements: result[3] as string,
+          rewardAmount: result[4] as bigint,
+          isActive: result[5] as boolean,
+          startTime: result[6] as bigint,
+          endTime: result[7] as bigint,
+          maxCompletions: result[8] as bigint,
+          currentCompletions: result[9] as bigint,
+          creator: result[10] as string,
+          createTime: result[11] as bigint,
+        };
+      }
+      
+      return null;
     } catch (error) {
       console.error("Error fetching quest:", error);
       return null;
     }
-  }, [contract, refetchActiveQuests, questManager]);
+  }, [contract, questManager]);
 
   const getSubmission = useCallback(async (submissionId: number): Promise<QuestSubmission | null> => {
     if (!contract || !questManager) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      const result = await refetchPendingSubmissions();
-      // This is a compatibility placeholder
-      return {
-        questId: BigInt(0),
-        player: "0x0000000000000000000000000000000000000000",
-        tweetUrl: "",
-        submitTime: BigInt(0),
-        status: 0,
-        verifyTime: BigInt(0),
-        verifiedBy: "0x0000000000000000000000000000000000000000",
-        nftTokenId: BigInt(0),
-        rejectionReason: "",
-      };
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "getSubmission",
+        params: [submissionId]
+      });
+      
+      if (result && Array.isArray(result) && result.length >= 9) {
+        return {
+          questId: result[0] as bigint,
+          player: result[1] as string,
+          tweetUrl: result[2] as string,
+          submitTime: result[3] as bigint,
+          status: result[4] as number,
+          verifyTime: result[5] as bigint,
+          verifiedBy: result[6] as string,
+          nftTokenId: result[7] as bigint,
+          rejectionReason: result[8] as string,
+        };
+      }
+      
+      return null;
     } catch (error) {
       console.error("Error fetching submission:", error);
       return null;
     }
-  }, [contract, refetchPendingSubmissions, questManager]);
+  }, [contract, questManager]);
 
   const getPlayerSubmissions = useCallback(async (playerAddress: string): Promise<bigint[] | null> => {
     if (!contract || !playerAddress || !questManager) return null;
@@ -467,16 +483,26 @@ export function useNFTMinter() {
     if (!contract || !nftMinter) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      return {
-        questId: BigInt(0),
-        recipient: "0x0000000000000000000000000000000000000000",
-        tweetUrl: "",
-        mintTime: BigInt(0),
-        questReward: BigInt(0),
-        questTitle: "",
-        isValid: false,
-      };
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "getBadge",
+        params: [tokenId]
+      });
+      
+      if (result && Array.isArray(result) && result.length >= 7) {
+        return {
+          questId: result[0] as bigint,
+          recipient: result[1] as string,
+          tweetUrl: result[2] as string,
+          mintTime: result[3] as bigint,
+          questReward: result[4] as bigint,
+          questTitle: result[5] as string,
+          isValid: result[6] as boolean,
+        };
+      }
+      
+      return null;
     } catch (error) {
       console.error("Error fetching badge:", error);
       return null;
@@ -487,8 +513,13 @@ export function useNFTMinter() {
     if (!contract || !userAddress || !nftMinter) return 0;
     
     try {
-      // In v5, you'd use the actual read function
-      return 0;
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "getUserBadgeCount",
+        params: [userAddress]
+      });
+      return Number(result) || 0;
     } catch (error) {
       console.error("Error fetching user badge count:", error);
       return 0;
@@ -499,8 +530,13 @@ export function useNFTMinter() {
     if (!contract || !nftMinter) return null;
     
     try {
-      // In v5, you'd use the actual read function
-      return "";
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "tokenURI",
+        params: [tokenId]
+      });
+      return result as string || "";
     } catch (error) {
       console.error("Error fetching token URI:", error);
       return null;

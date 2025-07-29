@@ -110,11 +110,29 @@ export default function QuestSubmissionForm({
 
     try {
       await submitQuestProof(Number(quest.questId), tweetUrl.trim());
-      toast.success('Quest submitted successfully! Awaiting verification...');
+      toast.success('Quest submitted successfully! Check your dashboard for verification status.');
       onSuccess();
     } catch (error: any) {
       console.error('Submission error:', error);
-      // Error handling is done in the hook
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to submit quest. Please try again.';
+      
+      if (error?.message) {
+        if (error.message.includes('rejected')) {
+          errorMessage = 'Transaction was rejected. Please try again.';
+        } else if (error.message.includes('insufficient')) {
+          errorMessage = 'Insufficient funds for transaction fees.';
+        } else if (error.message.includes('already submitted')) {
+          errorMessage = 'You have already submitted this quest.';
+        } else if (error.message.includes('not active')) {
+          errorMessage = 'This quest is no longer active.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        }
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

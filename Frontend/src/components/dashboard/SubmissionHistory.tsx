@@ -68,27 +68,43 @@ export default function SubmissionHistory() {
       setIsLoading(true);
 
       try {
-        // Get user's submission IDs
-        const submissionIds = await getPlayerSubmissions(address);
+        // Get user's submission IDs with error handling
+        let submissionIds: bigint[] = [];
+        try {
+          const ids = await getPlayerSubmissions(address);
+          submissionIds = ids || [];
+        } catch (error) {
+          console.warn('Failed to fetch player submissions:', error);
+        }
         
-        if (!submissionIds || submissionIds.length === 0) {
+        if (submissionIds.length === 0) {
           setSubmissions([]);
           setIsLoading(false);
           return;
         }
 
-        // Fetch detailed submission data
+        // Fetch detailed submission data with individual error handling
         const submissionPromises = submissionIds.map(async (id: any) => {
-          const submission = await getSubmission(Number(id));
-          if (!submission) return null;
+          try {
+            const submission = await getSubmission(Number(id));
+            if (!submission) return null;
 
-          // Fetch quest details for each submission
-          const questDetails = await getQuest(Number(submission.questId));
-          
-          return {
-            ...submission,
-            questDetails,
-          } as SubmissionWithQuest;
+            // Fetch quest details for each submission with error handling
+            let questDetails = null;
+            try {
+              questDetails = await getQuest(Number(submission.questId));
+            } catch (error) {
+              console.warn(`Failed to fetch quest details for quest ${submission.questId}:`, error);
+            }
+            
+            return {
+              ...submission,
+              questDetails,
+            } as SubmissionWithQuest;
+          } catch (error) {
+            console.warn(`Failed to fetch submission ${id}:`, error);
+            return null;
+          }
         });
 
         const submissionsData = await Promise.all(submissionPromises);
@@ -98,6 +114,8 @@ export default function SubmissionHistory() {
 
       } catch (error) {
         console.error('Error fetching submission history:', error);
+        // Set empty array on error to show empty state
+        setSubmissions([]);
       } finally {
         setIsLoading(false);
       }

@@ -75,31 +75,57 @@ export default function NFTGallery() {
       setIsLoading(true);
 
       try {
-        // Get user's badge token IDs
-        const userBadgeIds = await getUserBadges(address);
-        const badgeCount = await getUserBadgeCount(address);
+        // Initialize default values
+        let userBadgeIds: bigint[] = [];
+        let badgeCount = 0;
+
+        // Get user's badge token IDs with error handling
+        try {
+          const ids = await getUserBadges(address);
+          userBadgeIds = ids || [];
+        } catch (error) {
+          console.warn('Failed to fetch user badges:', error);
+        }
+
+        // Get badge count with error handling
+        try {
+          badgeCount = await getUserBadgeCount(address);
+        } catch (error) {
+          console.warn('Failed to fetch badge count:', error);
+        }
         
         setUserBadgeCount(badgeCount);
 
-        if (!userBadgeIds || userBadgeIds.length === 0) {
+        if (userBadgeIds.length === 0) {
           setBadges([]);
           setIsLoading(false);
           return;
         }
 
-        // Fetch detailed badge information
+        // Fetch detailed badge information with individual error handling
         const badgePromises = userBadgeIds.map(async (tokenId: any) => {
-          const badge = await getBadge(Number(tokenId));
-          if (!badge) return null;
+          try {
+            const badge = await getBadge(Number(tokenId));
+            if (!badge) return null;
 
-          // Get token URI for metadata
-          const tokenURI = await getTokenURI(Number(tokenId));
+            // Get token URI for metadata with error handling
+            let tokenURI = "";
+            try {
+              const uri = await getTokenURI(Number(tokenId));
+              tokenURI = uri || "";
+            } catch (error) {
+              console.warn(`Failed to fetch token URI for ${tokenId}:`, error);
+            }
 
-          return {
-            ...badge,
-            tokenId: Number(tokenId),
-            tokenURI,
-          } as BadgeWithMetadata;
+            return {
+              ...badge,
+              tokenId: Number(tokenId),
+              tokenURI,
+            } as BadgeWithMetadata;
+          } catch (error) {
+            console.warn(`Failed to fetch badge data for ${tokenId}:`, error);
+            return null;
+          }
         });
 
         const badgeData = await Promise.all(badgePromises);
@@ -109,7 +135,8 @@ export default function NFTGallery() {
 
       } catch (error) {
         console.error('Error fetching user badges:', error);
-        toast.error('Failed to load NFT badges');
+        // Don't show toast error, let component handle empty state gracefully
+        setBadges([]);
       } finally {
         setIsLoading(false);
       }

@@ -68,18 +68,18 @@ export default function PoolStats() {
       setIsLoading(true);
 
       try {
-        // Base pool data
-        const totalPoolBalance = formatTokenAmount(poolBalance, 6);
+        // Base pool data with safe defaults
+        const totalPoolBalance = formatTokenAmount(poolBalance || BigInt(0), 6);
         const totalStakers = Number(poolStats?.[1]) || 0;
-        const totalRewardsDistributed = formatTokenAmount(poolStats?.[2], 6);
+        const totalRewardsDistributed = formatTokenAmount(poolStats?.[2] || BigInt(0), 6);
         
-        // Calculate derived metrics
+        // Calculate derived metrics with safe fallbacks
         const averageStakeAmount = totalStakers > 0 
           ? (parseFloat(totalPoolBalance) / totalStakers).toFixed(2)
           : '0';
 
         const totalQuests = 10; // Mock data - would get from contract/subgraph
-        const activeQuestsCount = (activeQuests as unknown as any[])?.length || 0;
+        const activeQuestsCount = Array.isArray(activeQuests) ? activeQuests.length : 0;
         const totalSubmissions = 50; // Mock data
         const completedSubmissions = 35; // Mock data
         const totalNFTsMinted = Number(totalSupply) || 0;
@@ -111,6 +111,20 @@ export default function PoolStats() {
 
       } catch (error) {
         console.error('Error calculating statistics:', error);
+        // Set default statistics to prevent component failure
+        setStatistics({
+          totalPoolBalance: '0',
+          totalStakers: 0,
+          totalRewardsDistributed: '0',
+          averageStakeAmount: '0',
+          totalQuests: 0,
+          activeQuests: 0,
+          totalSubmissions: 0,
+          completedSubmissions: 0,
+          totalNFTsMinted: 0,
+          poolUtilizationRate: 0,
+          successRate: 0,
+        });
       } finally {
         setIsLoading(false);
       }

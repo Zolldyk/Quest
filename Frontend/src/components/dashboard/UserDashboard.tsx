@@ -71,26 +71,50 @@ export default function UserDashboard() {
       setIsLoading(true);
 
       try {
-        // Get staking info
-        const stakerInfo = await stakingPool.getStakerInfo(address);
+        // Initialize default values
+        let stakerInfo = null;
+        let validSubmissions: QuestSubmission[] = [];
+        let badgeCount = 0;
+
+        // Get staking info with error handling
+        try {
+          stakerInfo = await stakingPool.getStakerInfo(address);
+        } catch (error) {
+          console.warn('Failed to fetch staker info:', error);
+        }
         
-        // Get user submissions
-        const submissionIds = await questManager.getPlayerSubmissions(address);
-        const submissions = await Promise.all(
-          (submissionIds || []).map(async (id: any) => {
-            return await questManager.getSubmission(Number(id));
-          })
-        );
+        // Get user submissions with error handling
+        try {
+          const submissionIds = await questManager.getPlayerSubmissions(address);
+          if (submissionIds && submissionIds.length > 0) {
+            const submissions = await Promise.all(
+              submissionIds.map(async (id: any) => {
+                try {
+                  return await questManager.getSubmission(Number(id));
+                } catch (error) {
+                  console.warn(`Failed to fetch submission ${id}:`, error);
+                  return null;
+                }
+              })
+            );
+            validSubmissions = submissions.filter(s => s !== null) as QuestSubmission[];
+          }
+        } catch (error) {
+          console.warn('Failed to fetch user submissions:', error);
+        }
         
-        const validSubmissions = submissions.filter(s => s !== null) as QuestSubmission[];
         setRecentSubmissions(validSubmissions.slice(-5)); // Last 5 submissions
 
         // Get completed quests count
         const completedCount = validSubmissions.filter(s => s.status === 1).length; // COMPLETED = 1
 
-        // Get NFT badges
-        const userBadges = await nftMinter.getUserBadges(address);
-        const badgeCount = userBadges?.length || 0;
+        // Get NFT badges with error handling
+        try {
+          const userBadges = await nftMinter.getUserBadges(address);
+          badgeCount = userBadges?.length || 0;
+        } catch (error) {
+          console.warn('Failed to fetch user badges:', error);
+        }
 
         // Calculate total earned (rough estimate from completed submissions)
         const totalEarnedAmount = validSubmissions
@@ -101,7 +125,7 @@ export default function UserDashboard() {
         const pendingCount = validSubmissions.filter(s => s.status === 0).length; // PENDING = 0
 
         const dashboardStats: DashboardStats = {
-          totalStaked: formatTokenAmount(stakerInfo?.stakedAmount, 6),
+          totalStaked: formatTokenAmount(stakerInfo?.stakedAmount || BigInt(0), 6),
           totalEarned: totalEarnedAmount.toString(),
           questsCompleted: completedCount,
           nftBadges: badgeCount,
@@ -112,6 +136,14 @@ export default function UserDashboard() {
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        // Set default stats on error to prevent complete failure
+        setStats({
+          totalStaked: '0',
+          totalEarned: '0',
+          questsCompleted: 0,
+          nftBadges: 0,
+          pendingSubmissions: 0,
+        });
       } finally {
         setIsLoading(false);
       }

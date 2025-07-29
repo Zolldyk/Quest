@@ -15,7 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useStakingPool, useUSDCToken, formatTokenAmount, StakerInfo, PoolStats } from '../../hooks/useContracts';
 import LoadingSpinner, { CardSkeleton } from '../ui/LoadingSpinner';
-import { toast } from 'react-hot-toast';
+// import { toast } from 'react-hot-toast'; // Removed for cleaner error handling
 
 // ============ Types ============
 interface StakingData {
@@ -86,14 +86,33 @@ export default function StakesSummary() {
       setIsLoading(true);
 
       try {
-        // Get user's staking info
-        const stakerInfo = await getStakerInfo(address);
+        // Initialize default values
+        let stakerInfo = null;
+        let usdcBalance = BigInt(0);
+        let currentAllowance = BigInt(0);
+
+        // Get user's staking info with error handling
+        try {
+          stakerInfo = await getStakerInfo(address);
+        } catch (error) {
+          console.warn('Failed to fetch staker info:', error);
+        }
         
-        // Get user's USDC balance
-        const usdcBalance = await getUSDCBalance(address);
+        // Get user's USDC balance with error handling
+        try {
+          const balance = await getUSDCBalance(address);
+          if (balance) usdcBalance = balance;
+        } catch (error) {
+          console.warn('Failed to fetch USDC balance:', error);
+        }
         
-        // Get allowance
-        const currentAllowance = await getAllowance(address, STAKING_POOL_ADDRESS);
+        // Get allowance with error handling
+        try {
+          const allowance = await getAllowance(address, STAKING_POOL_ADDRESS);
+          if (allowance) currentAllowance = allowance;
+        } catch (error) {
+          console.warn('Failed to fetch allowance:', error);
+        }
         
         // Calculate staking share
         const totalPool = poolBalance || BigInt(0);
@@ -119,17 +138,24 @@ export default function StakesSummary() {
             totalRewardsDistributed: poolStats[2],
             minimumStakeAmount: poolStats[3],
           } : null,
-          userBalance: formatTokenAmount(usdcBalance || BigInt(0), USDC_DECIMALS),
+          userBalance: formatTokenAmount(usdcBalance, USDC_DECIMALS),
           stakingShare,
           stakingHistory: mockHistory,
         };
 
         setStakingData(data);
-        setAllowance(currentAllowance || BigInt(0));
+        setAllowance(currentAllowance);
 
       } catch (error) {
         console.error('Error fetching staking data:', error);
-        toast.error('Failed to load staking data');
+        // Don't show error toast, let the component handle empty state gracefully
+        setStakingData({
+          stakerInfo: null,
+          poolStats: null,
+          userBalance: '0',
+          stakingShare: 0,
+          stakingHistory: [],
+        });
       } finally {
         setIsLoading(false);
       }

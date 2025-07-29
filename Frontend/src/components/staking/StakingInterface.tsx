@@ -2,7 +2,7 @@
 
 // ============ Imports ============
 import { useState, useEffect, useMemo } from 'react';
-import { toast } from 'react-hot-toast';
+// import { toast } from 'react-hot-toast'; // Removed for cleaner error handling
 import { 
   CurrencyDollarIcon, 
   ArrowUpIcon,
@@ -80,31 +80,58 @@ export default function StakingInterface() {
       setIsLoadingData(true);
       
       try {
-        // Get user's USDC balance
-        const usdcBalance = await getUSDCBalance(address);
+        // Initialize default values
+        let usdcBalance = BigInt(0);
+        let stakerInfo = null;
+        let currentAllowance = BigInt(0);
+
+        // Get user's USDC balance with error handling
+        try {
+          const balance = await getUSDCBalance(address);
+          if (balance) usdcBalance = balance;
+        } catch (error) {
+          console.warn('Failed to fetch USDC balance:', error);
+        }
         
-        // Get user's staking info
-        const stakerInfo = await getStakerInfo(address);
+        // Get user's staking info with error handling
+        try {
+          stakerInfo = await getStakerInfo(address);
+        } catch (error) {
+          console.warn('Failed to fetch staker info:', error);
+        }
         
-        // Get allowance
-        const currentAllowance = await getAllowance(address, STAKING_POOL_ADDRESS);
+        // Get allowance with error handling
+        try {
+          const allowance = await getAllowance(address, STAKING_POOL_ADDRESS);
+          if (allowance) currentAllowance = allowance;
+        } catch (error) {
+          console.warn('Failed to fetch allowance:', error);
+        }
         
         // Format stats
         const newStats: StakingStats = {
-          totalPoolBalance: formatTokenAmount(poolBalance, USDC_DECIMALS),
+          totalPoolBalance: formatTokenAmount(poolBalance || BigInt(0), USDC_DECIMALS),
           totalStakers: Number(poolStats?.[1]) || 0,
-          totalRewards: formatTokenAmount(poolStats?.[2], USDC_DECIMALS),
-          minimumStake: formatTokenAmount(poolStats?.[3], USDC_DECIMALS),
-          userStaked: formatTokenAmount(stakerInfo?.stakedAmount, USDC_DECIMALS),
-          userBalance: formatTokenAmount(usdcBalance || undefined, USDC_DECIMALS),
+          totalRewards: formatTokenAmount(poolStats?.[2] || BigInt(0), USDC_DECIMALS),
+          minimumStake: formatTokenAmount(poolStats?.[3] || BigInt(0), USDC_DECIMALS),
+          userStaked: formatTokenAmount(stakerInfo?.stakedAmount || BigInt(0), USDC_DECIMALS),
+          userBalance: formatTokenAmount(usdcBalance, USDC_DECIMALS),
         };
 
         setStats(newStats);
-        setAllowance(currentAllowance || BigInt(0));
+        setAllowance(currentAllowance);
         
       } catch (error) {
         console.error('Error fetching user data:', error);
-        toast.error('Failed to load staking data');
+        // Set default stats to prevent complete failure
+        setStats({
+          totalPoolBalance: '0',
+          totalStakers: 0,
+          totalRewards: '0',
+          minimumStake: '0',
+          userStaked: '0',
+          userBalance: '0',
+        });
       } finally {
         setIsLoadingData(false);
       }
