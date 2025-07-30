@@ -33,7 +33,15 @@ export default function QuestSubmissionForm({
 }: QuestSubmissionFormProps) {
 
   // ============ Hooks ============
-  const { submitQuestProof, isSubmitting } = useQuestManager();
+  const questManagerHook = useQuestManager();
+  const { submitQuestProof, isSubmitting } = questManagerHook;
+  
+  console.log('QuestSubmissionForm rendered:', {
+    questManagerHook,
+    submitQuestProof: typeof submitQuestProof,
+    isSubmitting,
+    quest
+  });
 
   // ============ State ============
   const [tweetUrl, setTweetUrl] = useState('');
@@ -96,15 +104,31 @@ export default function QuestSubmissionForm({
 
   // ============ Handlers ============
   const handleUrlChange = (value: string) => {
+    console.log('URL changed:', value);
     setTweetUrl(value);
     const validation = validateTweetUrl(value);
+    console.log('URL validation result:', validation);
     setIsValidUrl(validation.isValid);
     setUrlError(validation.error);
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called with:', {
+      isValidUrl,
+      tweetUrl: tweetUrl.trim(),
+      submitQuestProof: typeof submitQuestProof,
+      isSubmitting
+    });
+
     if (!isValidUrl || !tweetUrl.trim()) {
+      console.log('Validation failed:', { isValidUrl, tweetUrl: tweetUrl.trim() });
       toast.error('Please provide a valid tweet URL');
+      return;
+    }
+
+    if (!submitQuestProof) {
+      console.error('submitQuestProof function is not available!');
+      toast.error('Contract connection not available. Please refresh and try again.');
       return;
     }
 
@@ -484,8 +508,17 @@ function SubmissionStep({
             console.log('Submit Quest button clicked!', {
               isValidUrl,
               isSubmitting,
-              disabled: !isValidUrl || isSubmitting
+              disabled: !isValidUrl || isSubmitting,
+              onSubmit: typeof onSubmit,
+              tweetUrl
             });
+            
+            if (!isValidUrl || isSubmitting) {
+              console.log('Button is disabled, not calling onSubmit');
+              return;
+            }
+            
+            console.log('Calling onSubmit...');
             onSubmit();
           }}
           disabled={!isValidUrl || isSubmitting}
