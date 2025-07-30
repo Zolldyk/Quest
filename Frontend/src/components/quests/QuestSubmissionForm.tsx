@@ -42,6 +42,13 @@ export default function QuestSubmissionForm({
     isSubmitting,
     quest
   });
+  
+  // Add alert to check if component is rendering
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      alert(`QuestSubmissionForm loaded! submitQuestProof: ${typeof submitQuestProof}`);
+    }, 1000);
+  }
 
   // ============ State ============
   const [tweetUrl, setTweetUrl] = useState('');
@@ -150,8 +157,18 @@ export default function QuestSubmissionForm({
 
     try {
       console.log('Calling submitQuestProof...');
-      const result = await submitQuestProof(Number(quest.questId), tweetUrl.trim());
+      alert('About to call submitQuestProof with questId: ' + Number(quest.questId));
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Submission timed out')), 30000)
+      );
+      
+      const submissionPromise = submitQuestProof(Number(quest.questId), tweetUrl.trim());
+      
+      const result = await Promise.race([submissionPromise, timeoutPromise]);
       console.log('Quest submission result:', result);
+      alert('Quest submitted successfully!');
       
       toast.success('Quest submitted successfully! Check your dashboard for verification status.');
       onSuccess();
@@ -163,6 +180,8 @@ export default function QuestSubmissionForm({
         stack: error?.stack,
         name: error?.name
       });
+      
+      alert('Error occurred: ' + (error?.message || 'Unknown error'));
       
       // Provide user-friendly error messages
       let errorMessage = 'Failed to submit quest. Please try again.';
@@ -182,6 +201,10 @@ export default function QuestSubmissionForm({
           errorMessage = 'Smart contract is not available. Please check your network connection.';
         } else if (error.message.includes('No account connected')) {
           errorMessage = 'Please connect your wallet and try again.';
+        } else if (error.message.includes('timed out')) {
+          errorMessage = 'Transaction timed out. Please try again.';
+        } else {
+          errorMessage = `Error: ${error.message}`;
         }
       }
       
