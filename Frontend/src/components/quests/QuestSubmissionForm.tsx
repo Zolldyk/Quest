@@ -126,15 +126,18 @@ export default function QuestSubmissionForm({
       submitQuestProof: typeof submitQuestProof,
       isSubmitting
     });
+    alert('handleSubmit function called!');
 
     if (!isValidUrl || !tweetUrl.trim()) {
       console.log('Validation failed:', { isValidUrl, tweetUrl: tweetUrl.trim() });
+      alert('Validation failed: URL not valid or empty');
       toast.error('Please provide a valid tweet URL');
       return;
     }
 
     if (!submitQuestProof) {
       console.error('submitQuestProof function is not available!');
+      alert('submitQuestProof function not available!');
       toast.error('Contract connection not available. Please refresh and try again.');
       return;
     }
@@ -530,13 +533,16 @@ function SubmissionStep({
               onSubmit: typeof onSubmit,
               tweetUrl
             });
+            alert(`Submit Quest button clicked! Valid: ${isValidUrl}, Submitting: ${isSubmitting}`);
             
             if (!isValidUrl || isSubmitting) {
               console.log('Button is disabled, not calling onSubmit');
+              alert('Button is disabled - URL not valid or already submitting');
               return;
             }
             
             console.log('Calling onSubmit...');
+            alert('About to call onSubmit...');
             onSubmit();
           }}
           disabled={!isValidUrl || isSubmitting}

@@ -88,6 +88,7 @@ export default function QuestsPage() {
                     <button
                       onClick={() => {
                         console.log('Submit Quest Proof button clicked - opening modal');
+                        alert('Submit Quest Proof button clicked!');
                         setShowSubmissionForm(true);
                       }}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
