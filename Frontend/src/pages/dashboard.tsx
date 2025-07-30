@@ -8,8 +8,6 @@ import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
 import { UserIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import ErrorBoundary from '../components/ui/ErrorBoundary';
-import ContractStatus from '../components/ui/ContractStatus';
 
 // Dynamically import components that use contracts to avoid SSR issues
 const UserDashboard = dynamic(() => import('../components/dashboard/UserDashboard'), {
@@ -104,9 +102,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Contract Status */}
-              <ContractStatus />
-
               {/* Main Dashboard Content */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Main Dashboard */}
@@ -122,9 +117,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      <ErrorBoundary>
-                        {isClient ? <UserDashboard /> : <LoadingSpinner />}
-                      </ErrorBoundary>
+                      {isClient ? <UserDashboard /> : <LoadingSpinner />}
                     </div>
                   </div>
 
@@ -139,9 +132,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      <ErrorBoundary>
-                        {isClient ? <SubmissionHistory /> : <LoadingSpinner />}
-                      </ErrorBoundary>
+                      {isClient ? <SubmissionHistory /> : <LoadingSpinner />}
                     </div>
                   </div>
 
@@ -156,9 +147,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      <ErrorBoundary>
-                        {isClient ? <NFTGallery /> : <LoadingSpinner />}
-                      </ErrorBoundary>
+                      {isClient ? <NFTGallery /> : <LoadingSpinner />}
                     </div>
                   </div>
                 </div>
@@ -176,9 +165,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="p-6">
-                      <ErrorBoundary>
-                        {isClient ? <StakesSummary /> : <LoadingSpinner />}
-                      </ErrorBoundary>
+                      {isClient ? <StakesSummary /> : <LoadingSpinner />}
                     </div>
                   </div>
 

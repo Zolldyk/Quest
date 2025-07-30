@@ -478,7 +478,16 @@ function SubmissionStep({
           Back to Instructions
         </button>
         <button
-          onClick={onSubmit}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Submit Quest button clicked!', {
+              isValidUrl,
+              isSubmitting,
+              disabled: !isValidUrl || isSubmitting
+            });
+            onSubmit();
+          }}
           disabled={!isValidUrl || isSubmitting}
           className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
         >

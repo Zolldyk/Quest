@@ -107,14 +107,30 @@ const getContractAddresses = () => {
     usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '',
   };
 
+  console.log('Contract addresses loaded:', addresses);
+  console.log('Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL: process.env.VERCEL,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+  });
+
   // Validate addresses
   const missingAddresses = Object.entries(addresses)
     .filter(([, value]) => !value || value.trim() === '' || value === 'undefined')
     .map(([key]) => key);
 
-  if (missingAddresses.length > 0 && process.env.NODE_ENV === 'development') {
-    console.warn(`Missing contract addresses: ${missingAddresses.join(', ')}`);
-    console.warn('Please check your environment variables.');
+  if (missingAddresses.length > 0) {
+    console.error(`Missing contract addresses: ${missingAddresses.join(', ')}`);
+    console.error('Please check your environment variables.');
+    console.error('Current env vars:', {
+      STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+      QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+      NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+      USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+    });
+    console.error('All process.env keys with NEXT_PUBLIC:', 
+      Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC'))
+    );
   }
 
   return addresses;
@@ -348,8 +364,13 @@ export function useQuestManager() {
     if (!contract || !playerAddress || !questManager) return false;
     
     try {
-      // In v5, you'd use the actual read function
-      return false;
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "hasPlayerCompletedQuest",
+        params: [playerAddress, questId]
+      });
+      return result as boolean;
     } catch (error) {
       console.error("Error checking quest completion:", error);
       return false;
@@ -360,8 +381,13 @@ export function useQuestManager() {
     if (!contract || !address || !questManager) return false;
     
     try {
-      // In v5, you'd use the actual read function
-      return false;
+      const { readContract } = await import('thirdweb');
+      const result = await readContract({
+        contract,
+        method: "isAdmin",
+        params: [address]
+      });
+      return result as boolean;
     } catch (error) {
       console.error("Error checking admin status:", error);
       return false;
