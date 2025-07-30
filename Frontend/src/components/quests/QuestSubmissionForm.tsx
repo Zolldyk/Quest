@@ -108,18 +108,33 @@ export default function QuestSubmissionForm({
       return;
     }
 
+    console.log('Quest submission starting:', {
+      questId: Number(quest.questId),
+      tweetUrl: tweetUrl.trim(),
+      quest: quest
+    });
+
     try {
-      await submitQuestProof(Number(quest.questId), tweetUrl.trim());
+      console.log('Calling submitQuestProof...');
+      const result = await submitQuestProof(Number(quest.questId), tweetUrl.trim());
+      console.log('Quest submission result:', result);
+      
       toast.success('Quest submitted successfully! Check your dashboard for verification status.');
       onSuccess();
     } catch (error: any) {
       console.error('Submission error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        cause: error?.cause,
+        stack: error?.stack,
+        name: error?.name
+      });
       
       // Provide user-friendly error messages
       let errorMessage = 'Failed to submit quest. Please try again.';
       
       if (error?.message) {
-        if (error.message.includes('rejected')) {
+        if (error.message.includes('rejected') || error.message.includes('denied')) {
           errorMessage = 'Transaction was rejected. Please try again.';
         } else if (error.message.includes('insufficient')) {
           errorMessage = 'Insufficient funds for transaction fees.';
@@ -129,6 +144,10 @@ export default function QuestSubmissionForm({
           errorMessage = 'This quest is no longer active.';
         } else if (error.message.includes('network')) {
           errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('Contract not available')) {
+          errorMessage = 'Smart contract is not available. Please check your network connection.';
+        } else if (error.message.includes('No account connected')) {
+          errorMessage = 'Please connect your wallet and try again.';
         }
       }
       
