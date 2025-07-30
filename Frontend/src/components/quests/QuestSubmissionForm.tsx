@@ -48,6 +48,13 @@ export default function QuestSubmissionForm({
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [urlError, setUrlError] = useState('');
   const [step, setStep] = useState<'instructions' | 'submit'>('instructions');
+  
+  console.log('QuestSubmissionForm state:', {
+    step,
+    tweetUrl,
+    isValidUrl,
+    urlError
+  });
 
   // Handle escape key
   useEffect(() => {
@@ -233,7 +240,10 @@ export default function QuestSubmissionForm({
           {step === 'instructions' ? (
             <InstructionsStep
               quest={quest}
-              onNext={() => setStep('submit')}
+              onNext={() => {
+                console.log('Moving to submit step');
+                setStep('submit');
+              }}
               onCopyHashtag={handleCopyHashtag}
               onCopyRequirements={handleCopyRequirements}
             />
@@ -246,7 +256,10 @@ export default function QuestSubmissionForm({
               isSubmitting={isSubmitting}
               onUrlChange={handleUrlChange}
               onSubmit={handleSubmit}
-              onBack={() => setStep('instructions')}
+              onBack={() => {
+                console.log('Moving back to instructions step');
+                setStep('instructions');
+              }}
             />
           )}
         </div>
@@ -379,7 +392,12 @@ function InstructionsStep({
       </div>
 
       <button
-        onClick={onNext}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Instructions step - next button clicked');
+          onNext();
+        }}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
       >
         I&apos;ve completed the task - Submit proof

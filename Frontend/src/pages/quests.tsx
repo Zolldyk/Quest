@@ -7,7 +7,6 @@ import QuestDisplay from '../components/quests/QuestDisplay';
 import QuestSubmissionForm from '../components/quests/QuestSubmissionForm';
 import WalletConnectionV5 from '../components/wallet/WalletConnectionV5';
 import { TrophyIcon } from '@heroicons/react/24/outline';
-import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 // ============ Quests Page Component ============
 /**
@@ -70,9 +69,7 @@ export default function QuestsPage() {
                   </p>
                 </div>
                 <div className="p-6">
-                  <ErrorBoundary>
-                    <QuestDisplay />
-                  </ErrorBoundary>
+                  <QuestDisplay />
                 </div>
               </div>
 
@@ -89,7 +86,10 @@ export default function QuestsPage() {
                   </div>
                   <div className="p-6">
                     <button
-                      onClick={() => setShowSubmissionForm(true)}
+                      onClick={() => {
+                        console.log('Submit Quest Proof button clicked - opening modal');
+                        setShowSubmissionForm(true);
+                      }}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
                     >
                       <TrophyIcon className="h-5 w-5 mr-2" />
