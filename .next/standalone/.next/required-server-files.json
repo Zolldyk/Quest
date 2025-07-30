@@ -1,7 +1,12 @@
 {
   "version": 1,
   "config": {
-    "env": {},
+    "env": {
+      "NEXT_PUBLIC_STAKING_POOL_ADDRESS": "0x4f910ef3996d7C4763EFA2fEf15265e8b918cD0b",
+      "NEXT_PUBLIC_QUEST_MANAGER_ADDRESS": "0x02fc1eCc6c04fdd2760E74F9343b69d9c3798aD0",
+      "NEXT_PUBLIC_NFT_MINTER_ADDRESS": "0x9d44cb1dbd766dd8c4ab8493dbf8cbfb9650f907",
+      "NEXT_PUBLIC_USDC_TOKEN_ADDRESS": "0x818d24c1e6828c7e86056BFe778B13b830b49dDA"
+    },
     "eslint": {
       "ignoreDuringBuilds": false,
       "dirs": [
@@ -96,7 +101,7 @@
     },
     "logging": {},
     "compiler": {
-      "removeConsole": true
+      "removeConsole": false
     },
     "expireTime": 31536000,
     "staticPageGenerationTimeout": 60,

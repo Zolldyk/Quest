@@ -5,6 +5,8 @@ export const metadata = {
   description: 'Stake USDC to fund community quests and support the Quest ecosystem',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function Staking() {
   return <StakingPage />;
 }

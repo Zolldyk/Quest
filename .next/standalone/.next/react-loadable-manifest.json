@@ -1,4 +1,61 @@
 {
+  "Frontend/src/hooks/useContracts.ts -> thirdweb": {
+    "id": 47415,
+    "files": [
+      "static/chunks/47415.c7816564f8bd4a4a.js"
+    ]
+  },
+  "Frontend/src/pages/dashboard.tsx -> ../components/dashboard/StakesSummary": {
+    "id": 80749,
+    "files": [
+      "static/chunks/31530-9484000f17040613.js",
+      "static/chunks/98359-357cdbd77ec75080.js",
+      "static/chunks/80749.624efd64a4ab64d8.js",
+      "static/chunks/82771.c18aa486d88bf837.js"
+    ]
+  },
+  "Frontend/src/pages/dashboard.tsx -> ../components/dashboard/SubmissionHistory": {
+    "id": 95999,
+    "files": [
+      "static/chunks/31530-9484000f17040613.js",
+      "static/chunks/98359-357cdbd77ec75080.js",
+      "static/chunks/95999.38736127663371de.js"
+    ]
+  },
+  "Frontend/src/pages/dashboard.tsx -> ../components/dashboard/UserDashboard": {
+    "id": 13777,
+    "files": [
+      "static/chunks/31530-9484000f17040613.js",
+      "static/chunks/98359-357cdbd77ec75080.js",
+      "static/chunks/95999.38736127663371de.js",
+      "static/chunks/80749.624efd64a4ab64d8.js",
+      "static/chunks/13777.468fef5c7b6aa5a3.js"
+    ]
+  },
+  "Frontend/src/pages/dashboard.tsx -> ../components/nft/NFTGallery": {
+    "id": 89866,
+    "files": [
+      "static/chunks/31530-9484000f17040613.js",
+      "static/chunks/98359-357cdbd77ec75080.js",
+      "static/chunks/89866.2ed0b7741642640c.js"
+    ]
+  },
+  "Frontend/src/pages/staking.tsx -> ../components/staking/StakingInterface": {
+    "id": 50412,
+    "files": [
+      "static/chunks/31530-9484000f17040613.js",
+      "static/chunks/98359-357cdbd77ec75080.js",
+      "static/chunks/50412.996ff2f70629c375.js"
+    ]
+  },
+  "Frontend/src/pages/staking.tsx -> ../components/stats/PoolStats": {
+    "id": 18184,
+    "files": [
+      "static/chunks/31530-9484000f17040613.js",
+      "static/chunks/98359-357cdbd77ec75080.js",
+      "static/chunks/18184.50a01d35fbdf16ba.js"
+    ]
+  },
   "node_modules/@walletconnect/universal-provider/node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js": {
     "id": null,
     "files": []
@@ -34,14 +91,12 @@
   "node_modules/thirdweb/dist/esm/contract/actions/resolve-abi.js -> ../../extensions/modules/__generated__/IModularCore/read/getInstalledModules.js": {
     "id": 1102,
     "files": [
-      "static/chunks/1102.f43f8ee0c47ce4dd.js"
+      "static/chunks/1102.89b4d01c7e8e8e88.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/contract/actions/resolve-abi.js -> ../../transaction/read-contract.js": {
     "id": 26489,
-    "files": [
-      "static/chunks/26489.dbaab98aed36a9a5.js"
-    ]
+    "files": []
   },
   "node_modules/thirdweb/dist/esm/contract/actions/resolve-abi.js -> ../../utils/bytecode/extractIPFS.js": {
     "id": 66079,
@@ -52,7 +107,7 @@
   "node_modules/thirdweb/dist/esm/contract/actions/resolve-abi.js -> ../../utils/bytecode/resolveImplementation.js": {
     "id": 65824,
     "files": [
-      "static/chunks/65824.77f777e1dbfc65cd.js"
+      "static/chunks/43443.896c88135cb2df45.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/extensions/erc20/drops/write/claimTo.js -> ../../../../utils/units.js": {
@@ -278,7 +333,7 @@
   "node_modules/thirdweb/dist/esm/react/web/ui/ConnectWallet/Modal/AnyWalletConnectUI.js -> ../../../wallets/in-app/InAppWalletConnectUI.js": {
     "id": 58808,
     "files": [
-      "static/chunks/58808.3b355d250a28b6f1.js"
+      "static/chunks/58808.b38c754f4f8d5411.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/react/web/ui/ConnectWallet/Modal/AnyWalletConnectUI.js -> ../../../wallets/shared/CoinbaseSDKConnection.js": {
@@ -358,7 +413,7 @@
   "node_modules/thirdweb/dist/esm/react/web/ui/ConnectWallet/screens/LinkProfileScreen.js -> ../../../wallets/in-app/InAppWalletConnectUI.js": {
     "id": 58808,
     "files": [
-      "static/chunks/58808.3b355d250a28b6f1.js"
+      "static/chunks/58808.b38c754f4f8d5411.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/react/web/ui/components/QRCode.js -> ./QRCode/QRCodeRenderer.js": {
@@ -628,7 +683,7 @@
   "node_modules/thirdweb/dist/esm/transaction/actions/estimate-gas-cost.js -> ../../gas/estimate-l1-fee.js": {
     "id": 71007,
     "files": [
-      "static/chunks/71007.e2dba168ad606cbe.js"
+      "static/chunks/71007.368365b9de1758e8.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/transaction/actions/estimate-gas.js -> ../../rpc/actions/eth_estimateGas.js": {
@@ -3126,7 +3181,7 @@
   "node_modules/thirdweb/dist/esm/wallets/__generated__/getWalletInfo.js -> ./wallet/com.roninchain.wallet/image.js": {
     "id": 43443,
     "files": [
-      "static/chunks/43443.930302440afaf002.js"
+      "static/chunks/65824.5f0b6b3ccce96cc3.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/wallets/__generated__/getWalletInfo.js -> ./wallet/com.roninchain.wallet/index.js": {
@@ -6118,7 +6173,6 @@
   "node_modules/thirdweb/dist/esm/wallets/coinbase/coinbase-web.js -> @coinbase/wallet-sdk": {
     "id": 3911,
     "files": [
-      "static/chunks/44134-36e11c06827ceec3.js",
       "static/chunks/3911.5c51d322439fe223.js"
     ]
   },
@@ -6137,8 +6191,7 @@
   "node_modules/thirdweb/dist/esm/wallets/create-wallet.js -> ./wallet-connect/controller.js": {
     "id": 71564,
     "files": [
-      "static/chunks/20330-6b0a2e4a549b803c.js",
-      "static/chunks/71564.65b1eacf4837b356.js"
+      "static/chunks/71564.f08d7b485f43ed92.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/wallets/create-wallet.js -> ./wallet-connect/qr-overlay.js": {
@@ -6187,47 +6240,41 @@
   },
   "node_modules/thirdweb/dist/esm/wallets/in-app/core/wallet/in-app-core.js -> ./index.js": {
     "id": 30242,
-    "files": [
-      "static/chunks/81934-0820b229a3376ef6.js",
-      "static/chunks/30242.b1b3ea0d6ac5e66b.js"
-    ]
+    "files": []
   },
   "node_modules/thirdweb/dist/esm/wallets/in-app/core/wallet/index.js -> ../../../smart/index.js": {
     "id": 11220,
     "files": [
       "static/chunks/99134.69941cd0dafe635d.js",
-      "static/chunks/11220.2cd802928544dca0.js"
+      "static/chunks/11220.bca0f118ba5f9e1e.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/wallets/in-app/web/ecosystem.js -> ./lib/web-connector.js": {
     "id": 53184,
     "files": [
-      "static/chunks/53184.f295d8746df7088c.js",
-      "static/chunks/92482.f1b5ef95eaaf6e44.js"
+      "static/chunks/53184.8848ea7b5b709c33.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/wallets/in-app/web/in-app.js -> ./lib/web-connector.js": {
     "id": 53184,
     "files": [
-      "static/chunks/53184.f295d8746df7088c.js",
-      "static/chunks/92482.f1b5ef95eaaf6e44.js"
+      "static/chunks/53184.8848ea7b5b709c33.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/wallets/in-app/web/lib/auth/index.js -> ../web-connector.js": {
     "id": 53184,
     "files": [
-      "static/chunks/53184.f295d8746df7088c.js"
+      "static/chunks/53184.8848ea7b5b709c33.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/wallets/in-app/web/lib/web-connector.js -> ./auth/passkeys.js": {
     "id": 30658,
-    "files": [
-      "static/chunks/30658-a01336c5857cf0da.js"
-    ]
+    "files": []
   },
   "node_modules/thirdweb/dist/esm/wallets/smart/index.js -> ./lib/signing.js": {
     "id": 28835,
     "files": [
+      "static/chunks/15919-ca7ef3f8670f4283.js",
       "static/chunks/28835.876ace8ff5a42f4a.js"
     ]
   },
@@ -6246,9 +6293,9 @@
   "node_modules/thirdweb/dist/esm/wallets/smart/smart-wallet.js -> ./index.js": {
     "id": 11220,
     "files": [
-      "static/chunks/81934-0820b229a3376ef6.js",
+      "static/chunks/80807-0c22ffdf742c8a6a.js",
       "static/chunks/99134.69941cd0dafe635d.js",
-      "static/chunks/11220.2cd802928544dca0.js"
+      "static/chunks/11220.bca0f118ba5f9e1e.js"
     ]
   },
   "node_modules/thirdweb/dist/esm/wallets/utils/getTokenBalance.js -> ../../extensions/erc20/read/getBalance.js": {
@@ -6266,8 +6313,6 @@
   "node_modules/thirdweb/dist/esm/wallets/wallet-connect/controller.js -> @walletconnect/universal-provider": {
     "id": 92738,
     "files": [
-      "static/chunks/44134-36e11c06827ceec3.js",
-      "static/chunks/93060-6dc7350bcff8bc5d.js",
       "static/chunks/92738.8b8cdb1e24a67410.js"
     ]
   },

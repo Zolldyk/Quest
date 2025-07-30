@@ -70,23 +70,9 @@ export default function ContractStatus() {
     testConnections();
   }, [addresses, account]);
 
-  // Don't show anything if all contracts are properly connected
-  if (isValid && account && Object.values(connectionStatus).every(status => status === 'connected')) {
+  // Don't show anything if contracts are configured properly - let the actual data fetching determine success
+  if (isValid) {
     return null;
-  }
-
-  // Show minimal success state when wallet not connected but addresses are configured
-  if (isValid && !account) {
-    return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-        <div className="flex items-center">
-          <CheckCircleIcon className="h-4 w-4 text-blue-600 mr-2" />
-          <span className="text-sm text-blue-800 font-medium">
-            Contracts configured - connect wallet to test connections
-          </span>
-        </div>
-      </div>
-    );
   }
 
   return (

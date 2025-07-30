@@ -46,7 +46,13 @@ export default function QuestSubmissionForm({
   // Add alert to check if component is rendering
   if (typeof window !== 'undefined') {
     setTimeout(() => {
-      alert(`QuestSubmissionForm loaded! submitQuestProof: ${typeof submitQuestProof}`);
+      alert(`QuestSubmissionForm loaded! submitQuestProof: ${typeof submitQuestProof}\nContract addresses: ${JSON.stringify({
+        questManager: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+        stakingPool: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+        nftMinter: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+        usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+        thirdwebClientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
+      })}`);
     }, 1000);
   }
 

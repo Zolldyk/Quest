@@ -93,8 +93,8 @@ const nextConfig = {
   
     // Compiler options for better performance
     compiler: {
-      // Remove console.log in production builds
-      removeConsole: process.env.NODE_ENV === 'production',
+      // Keep console.log for debugging
+      removeConsole: false,
     },
   
     // Output configuration for deployment

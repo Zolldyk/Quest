@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[47415],{47415:(a,e,r)=>{r.d(e,{readContract:()=>t.readContract});var t=r(26489)}}]);

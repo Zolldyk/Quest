@@ -7,7 +7,7 @@ import { createThirdwebClient, getContract } from 'thirdweb';
 import { defineChain } from 'thirdweb/chains';
 import { useActiveAccount, useActiveWallet, useConnect } from 'thirdweb/react';
 import { readContract, prepareContractCall, sendTransaction } from 'thirdweb';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 // ============ Client Configuration ============
 export const client = createThirdwebClient({
@@ -108,14 +108,40 @@ export function useDisconnect() {
  */
 export function useContract(address: string, abi?: any) {
   const contract = useMemo(() => {
-    if (!address) return null;
+    if (!address) {
+      console.warn('Contract creation attempted with empty address');
+      return null;
+    }
     
-    return getContract({
-      client,
-      chain: getActiveChain(),
+    console.log('Creating contract instance:', {
       address,
-      abi
+      chain: getActiveChain(),
+      chainId: getActiveChain().id,
+      hasABI: !!abi
     });
+    
+    try {
+      const contractInstance = getContract({
+        client,
+        chain: getActiveChain(),
+        address,
+        abi
+      });
+      
+      console.log('Contract instance created successfully:', {
+        address: contractInstance.address,
+        chainId: contractInstance.chain?.id
+      });
+      
+      return contractInstance;
+    } catch (error) {
+      console.error('Failed to create contract instance:', {
+        address,
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+      return null;
+    }
   }, [address, abi]);
 
   return { contract };
@@ -125,27 +151,68 @@ export function useContract(address: string, abi?: any) {
  * Hook for reading contract data (v4 compatibility)
  */
 export function useContractRead(contract: any, functionName: string, args?: any[]) {
-  // Note: In v5, you'll need to implement proper state management
-  // for now, this is a placeholder that returns the structure v4 expects
-  return {
-    data: undefined,
-    isLoading: false,
-    error: null,
-    refetch: async () => {
-      if (!contract) return;
-      
-      try {
-        const result = await readContract({
-          contract,
-          method: functionName,
-          params: args || []
-        });
-        return result;
-      } catch (error) {
-        console.error('Contract read error:', error);
-        throw error;
-      }
+  const [data, setData] = useState<any>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  const refetch = useCallback(async () => {
+    if (!contract) {
+      console.warn('Contract read attempted but contract is null/undefined for method:', functionName);
+      return;
     }
+    
+    console.log('Contract read starting:', {
+      contractAddress: contract.address,
+      method: functionName,
+      params: args,
+      chain: contract.chain?.id
+    });
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const result = await readContract({
+        contract,
+        method: functionName,
+        params: args || []
+      });
+      console.log('Contract read success:', {
+        method: functionName,
+        result: result
+      });
+      setData(result);
+      return result;
+    } catch (error) {
+      console.error('Contract read error:', {
+        method: functionName,
+        contractAddress: contract.address,
+        error: error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+      setError(error);
+      // Don't throw the error - let components handle undefined data gracefully
+      return undefined;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [contract, functionName, args]);
+
+  // Auto-fetch on mount and when dependencies change
+  useEffect(() => {
+    if (contract) {
+      refetch().catch((error) => {
+        // Silently handle errors - they're already logged in refetch
+        console.warn('Auto-fetch failed, component will handle undefined data:', error.message);
+      });
+    }
+  }, [refetch, contract]);
+
+  return {
+    data,
+    isLoading,
+    error,
+    refetch
   };
 }
 
@@ -154,25 +221,68 @@ export function useContractRead(contract: any, functionName: string, args?: any[
  */
 export function useContractWrite(contract: any, functionName: string) {
   const account = useActiveAccount();
+  const [isPending, setIsPending] = useState(false);
   
   return {
     mutateAsync: async (args: any) => {
-      if (!contract) throw new Error('Contract not available');
-      if (!account) throw new Error('No account connected');
+      if (!contract) {
+        console.error('Contract write failed: Contract not available', { functionName });
+        throw new Error('Contract not available or not configured');
+      }
+      if (!account) {
+        console.error('Contract write failed: No account connected', { functionName });
+        throw new Error('No account connected');
+      }
       
-      const transaction = prepareContractCall({
-        contract,
+      console.log('Contract write starting:', {
+        contractAddress: contract.address,
         method: functionName,
-        params: Array.isArray(args) ? args : [args]
+        params: args,
+        account: account.address,
+        chain: contract.chain?.id
       });
       
-      return await sendTransaction({
-        transaction,
-        account
-      });
+      setIsPending(true);
+      
+      try {
+        const transaction = prepareContractCall({
+          contract,
+          method: functionName,
+          params: Array.isArray(args) ? args : [args]
+        });
+        
+        console.log('Prepared contract call:', {
+          to: transaction.to,
+          data: transaction.data
+        });
+        
+        const result = await sendTransaction({
+          transaction,
+          account
+        });
+        
+        console.log('Contract write success:', {
+          method: functionName,
+          transactionHash: result.transactionHash,
+          contractAddress: contract.address
+        });
+        
+        return result;
+      } catch (error) {
+        console.error('Contract write error:', {
+          method: functionName,
+          contractAddress: contract.address,
+          error: error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          account: account.address
+        });
+        throw error;
+      } finally {
+        setIsPending(false);
+      }
     },
-    isPending: false,
-    isLoading: false
+    isPending,
+    isLoading: isPending
   };
 }
 

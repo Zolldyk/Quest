@@ -5,6 +5,8 @@ export const metadata = {
   description: 'View your quest activity, stakes, rewards, and NFT collection',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function Dashboard() {
   return <DashboardPage />;
 }

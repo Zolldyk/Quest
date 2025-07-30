@@ -254,10 +254,31 @@ export function useStakingPool() {
  * Hook for interacting with QuestManager contract
  */
 export function useQuestManager() {
-  const { questManager } = getContractAddresses();
+  const addresses = getContractAddresses();
+  const { questManager } = addresses;
+  
+  console.log('useQuestManager hook initializing:', {
+    questManager,
+    questManagerAddress: questManager || 'EMPTY',
+    allAddresses: addresses,
+    envVarsDirectly: {
+      QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+      STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+      NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+      USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+      THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
+    }
+  });
   
   // Contract instance
   const { contract } = useContract(questManager || '', QUEST_MANAGER_ABI);
+  
+  console.log('useQuestManager contract result:', {
+    contract: !!contract,
+    contractAddress: contract?.address,
+    questManagerParam: questManager,
+    contractObject: contract
+  });
   
   // Read functions
   const { data: activeQuests, refetch: refetchActiveQuests } = useContractRead(
@@ -395,7 +416,50 @@ export function useQuestManager() {
   }, [contract, questManager]);
 
   const submitQuestProof = useCallback(async (questId: number, tweetUrl: string) => {
-    if (!contract || !questManager) throw new Error("Contract not available or not configured");
+    console.log('submitQuestProof called with:', {
+      questId,
+      tweetUrl,
+      contract: !!contract,
+      contractDetails: {
+        exists: !!contract,
+        address: contract?.address,
+        type: typeof contract,
+        keys: contract ? Object.keys(contract) : 'NO_CONTRACT'
+      },
+      questManager,
+      questManagerType: typeof questManager,
+      questManagerValue: questManager,
+      submitQuest: typeof submitQuest,
+      submitQuestExists: !!submitQuest
+    });
+    
+    if (!contract) {
+      console.error('CONTRACT IS NULL/UNDEFINED:', {
+        contract,
+        contractType: typeof contract,
+        questManager,
+        questManagerType: typeof questManager,
+        allEnvVars: {
+          QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+          STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+          NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+          USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+          THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
+        }
+      });
+      throw new Error("Contract not available or not configured - contract is null");
+    }
+    
+    if (!questManager) {
+      console.error('QUEST_MANAGER ADDRESS IS EMPTY:', {
+        questManager,
+        questManagerType: typeof questManager,
+        contractExists: !!contract,
+        contractAddress: contract?.address,
+        envVar: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS
+      });
+      throw new Error("Contract not available or not configured - questManager address is empty");
+    }
     
     try {
       const tx = await submitQuest([questId, tweetUrl]);

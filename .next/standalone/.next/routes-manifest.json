@@ -68,10 +68,22 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
-      "page": "/test-integrations",
-      "regex": "^/test\\-integrations(?:/)?$",
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
       "routeKeys": {},
-      "namedRegex": "^/test\\-integrations(?:/)?$"
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/quests",
+      "regex": "^/quests(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/quests(?:/)?$"
+    },
+    {
+      "page": "/staking",
+      "regex": "^/staking(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/staking(?:/)?$"
     }
   ],
   "dataRoutes": [],
