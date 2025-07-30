@@ -101,10 +101,10 @@ export interface QuestBadge {
 // ============ Contract Addresses ============
 const getContractAddresses = () => {
   const addresses = {
-    stakingPool: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS || '',
-    questManager: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS || '',
-    nftMinter: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS || '',
-    usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '',
+    stakingPool: (process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS || '').trim(),
+    questManager: (process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS || '').trim(),
+    nftMinter: (process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS || '').trim(),
+    usdcToken: (process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '').trim(),
   };
 
   console.log('Contract addresses loaded:', addresses);
@@ -460,6 +460,14 @@ export function useQuestManager() {
       });
       throw new Error("Contract not available or not configured - questManager address is empty");
     }
+    
+    // Success: Both contract and questManager are available
+    console.log('SUCCESS: Contract and questManager are both available!', {
+      contractAddress: contract.address,
+      questManagerAddress: questManager,
+      submitQuestFunction: typeof submitQuest
+    });
+    alert('SUCCESS: Contract connection established! Proceeding with quest submission...');
     
     try {
       const tx = await submitQuest([questId, tweetUrl]);

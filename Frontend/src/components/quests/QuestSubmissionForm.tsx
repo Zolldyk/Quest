@@ -43,16 +43,18 @@ export default function QuestSubmissionForm({
     quest
   });
   
-  // Add alert to check if component is rendering
+  // Add alert to check if contracts are properly loaded
   if (typeof window !== 'undefined') {
     setTimeout(() => {
-      alert(`QuestSubmissionForm loaded! submitQuestProof: ${typeof submitQuestProof}\nContract addresses: ${JSON.stringify({
-        questManager: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
-        stakingPool: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
-        nftMinter: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
-        usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
-        thirdwebClientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
-      })}`);
+      const addresses = {
+        questManager: (process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS || '').trim(),
+        stakingPool: (process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS || '').trim(),
+        nftMinter: (process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS || '').trim(),
+        usdcToken: (process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '').trim(),
+        thirdwebClientId: (process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || '').trim()
+      };
+      
+      alert(`QuestSubmissionForm loaded! submitQuestProof: ${typeof submitQuestProof}\nContract addresses (trimmed): ${JSON.stringify(addresses)}\nAll addresses valid: ${Object.values(addresses).every(addr => addr && addr.length > 0)}`);
     }, 1000);
   }
 
