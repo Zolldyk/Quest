@@ -17,8 +17,8 @@ const STAKING_POOL_ABI = [
 ] as const;
 
 const QUEST_MANAGER_ABI = [
-  "function submitQuest(uint256 questId, string calldata tweetUrl) external",
-  "function verifyQuest(uint256 submissionId, bool approved, string calldata rejectionReason) external",
+  "function submitQuest(uint256 questId, string tweetUrl) external",
+  "function verifyQuest(uint256 submissionId, bool approved, string rejectionReason) external",
   "function getQuest(uint256 questId) external view returns (tuple(uint256,string,string,string,uint256,bool,uint256,uint256,uint256,uint256,address,uint256))",
   "function getSubmission(uint256 submissionId) external view returns (tuple(uint256,address,string,uint256,uint8,uint256,address,uint256,string))",
   "function getActiveQuests() external view returns (uint256[])",
@@ -470,7 +470,9 @@ export function useQuestManager() {
     alert('SUCCESS: Contract connection established! Proceeding with quest submission...');
     
     try {
+      console.log('About to call submitQuest with params:', [questId, tweetUrl]);
       const tx = await submitQuest([questId, tweetUrl]);
+      console.log('submitQuest transaction result:', tx);
       toast.success("Quest submitted successfully! Waiting for verification...");
       
       // Refetch data
@@ -479,6 +481,13 @@ export function useQuestManager() {
       return tx;
     } catch (error: any) {
       console.error("Submit quest error:", error);
+      console.error("Submit quest error details:", {
+        message: error?.message,
+        cause: error?.cause,
+        stack: error?.stack,
+        reason: error?.reason,
+        code: error?.code
+      });
       toast.error(error?.message || "Failed to submit quest");
       throw error;
     }
