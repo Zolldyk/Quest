@@ -59,6 +59,13 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
   // Fetch quest details when active quests change
   useEffect(() => {
     const fetchQuestDetails = async () => {
+      console.log('🔍 QuestDisplay: Starting fetchQuestDetails', {
+        activeQuests,
+        activeQuestsType: typeof activeQuests,
+        isArray: Array.isArray(activeQuests),
+        defaultQuestId
+      });
+      
       setIsLoading(true);
       
       try {
@@ -68,16 +75,21 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
         try {
           if (Array.isArray(activeQuests)) {
             questIds = activeQuests;
+            console.log('✅ QuestDisplay: Got active quests array:', questIds);
           } else if (activeQuests && typeof activeQuests === 'object') {
             // Handle case where activeQuests might be wrapped in an object
             questIds = Object.values(activeQuests);
+            console.log('✅ QuestDisplay: Got active quests object values:', questIds);
+          } else {
+            console.warn('⚠️ QuestDisplay: activeQuests is not array or object:', activeQuests);
           }
         } catch (error) {
-          console.warn('Error processing activeQuests:', error);
+          console.warn('❌ QuestDisplay: Error processing activeQuests:', error);
         }
 
         // If no active quests from contract, show default quest
         if (questIds.length === 0) {
+          console.log('⚠️ QuestDisplay: No active quests from contract, using fallback quest');
           // Provide a default/mock quest for demonstration
           const defaultQuest: Quest = {
             questId: defaultQuestId || BigInt(1),

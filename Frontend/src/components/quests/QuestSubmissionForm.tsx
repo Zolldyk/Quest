@@ -103,17 +103,31 @@ export default function QuestSubmissionForm({
   };
 
   const handleSubmit = async () => {
+    console.log('🚀 QuestSubmissionForm: Starting handleSubmit', {
+      isValidUrl,
+      tweetUrl: tweetUrl.trim(),
+      questId: quest.questId.toString(),
+      submitQuestProof: !!submitQuestProof
+    });
+
     if (!isValidUrl || !tweetUrl.trim()) {
+      console.log('❌ QuestSubmissionForm: Invalid URL or empty tweet URL');
       toast.error('Please provide a valid tweet URL');
       return;
     }
 
     if (!submitQuestProof) {
+      console.log('❌ QuestSubmissionForm: submitQuestProof function not available');
       toast.error('Contract connection not available. Please refresh and try again.');
       return;
     }
 
     try {
+      console.log('🔄 QuestSubmissionForm: Calling submitQuestProof...', {
+        questId: Number(quest.questId),
+        tweetUrl: tweetUrl.trim()
+      });
+
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Submission timed out')), 30000)
@@ -121,11 +135,17 @@ export default function QuestSubmissionForm({
       
       const submissionPromise = submitQuestProof(Number(quest.questId), tweetUrl.trim());
       
-      await Promise.race([submissionPromise, timeoutPromise]);
+      const result = await Promise.race([submissionPromise, timeoutPromise]);
       
+      console.log('✅ QuestSubmissionForm: Submission successful', result);
       toast.success('Quest submitted successfully! Check your dashboard for verification status.');
       onSuccess();
     } catch (error: any) {
+      console.error('❌ QuestSubmissionForm: Submission failed', {
+        error,
+        errorMessage: error?.message,
+        errorStack: error?.stack
+      });
       // Provide user-friendly error messages
       let errorMessage = 'Failed to submit quest. Please try again.';
       

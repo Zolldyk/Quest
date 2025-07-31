@@ -405,8 +405,19 @@ export function useQuestManager() {
   const addresses = getContractAddresses();
   const { questManager } = addresses;
   
+  console.log('🔧 useQuestManager: Initializing', {
+    questManagerAddress: questManager,
+    hasAddress: !!questManager
+  });
+  
   // Contract instance
   const { contract } = useContract(questManager || '', QUEST_MANAGER_ABI);
+  
+  console.log('🔧 useQuestManager: Contract instance', {
+    contract: !!contract,
+    contractAddress: contract?.address,
+    contractChain: contract?.chain?.id
+  });
   
   // Read functions
   const { data: activeQuests, refetch: refetchActiveQuests } = useContractRead(
@@ -418,6 +429,14 @@ export function useQuestManager() {
   );
   
   const { data: defaultQuestId } = useContractRead(contract, "getDefaultQuestId");
+
+  console.log('🔧 useQuestManager: Contract read results', {
+    activeQuests,
+    activeQuestsType: typeof activeQuests,
+    activeQuestsLength: Array.isArray(activeQuests) ? activeQuests.length : 'not array',
+    defaultQuestId: defaultQuestId?.toString(),
+    hasContract: !!contract
+  });
   
   // Write functions
   const { mutateAsync: submitQuest, isPending: isSubmitting } = useContractWrite(contract, "submitQuest");
@@ -544,23 +563,47 @@ export function useQuestManager() {
   }, [contract, questManager]);
 
   const submitQuestProof = useCallback(async (questId: number, tweetUrl: string) => {
+    console.log('🚀 submitQuestProof: Starting submission', {
+      questId,
+      tweetUrl,
+      hasContract: !!contract,
+      questManagerAddress: questManager,
+      hasSubmitQuest: !!submitQuest
+    });
+
     if (!contract) {
+      console.error('❌ submitQuestProof: Contract not available');
       throw new Error("Contract not available or not configured");
     }
     
     if (!questManager) {
+      console.error('❌ submitQuestProof: Quest manager address is empty');
       throw new Error("Contract not available or not configured - questManager address is empty");
     }
     
     try {
+      console.log('🔄 submitQuestProof: Calling submitQuest with params:', [questId, tweetUrl]);
       const tx = await submitQuest([questId, tweetUrl]);
+      
+      console.log('✅ submitQuestProof: Transaction successful', {
+        transactionHash: tx.transactionHash,
+        blockNumber: tx.blockNumber
+      });
+      
       toast.success("Quest submitted successfully! Waiting for verification...");
       
       // Refetch data
+      console.log('🔄 submitQuestProof: Refetching active quests...');
       await refetchActiveQuests();
       
       return tx;
     } catch (error: any) {
+      console.error('❌ submitQuestProof: Transaction failed', {
+        error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorData: error?.data
+      });
       toast.error(error?.message || "Failed to submit quest");
       throw error;
     }
