@@ -17,16 +17,181 @@ const STAKING_POOL_ABI = [
 ] as const;
 
 const QUEST_MANAGER_ABI = [
-  "function submitQuest(uint256 questId, string calldata tweetUrl) external",
-  "function verifyQuest(uint256 submissionId, bool approved, string calldata rejectionReason) external",
-  "function getQuest(uint256 questId) external view returns (tuple(uint256,string,string,string,uint256,bool,uint256,uint256,uint256,uint256,address,uint256))",
-  "function getSubmission(uint256 submissionId) external view returns (tuple(uint256,address,string,uint256,uint8,uint256,address,uint256,string))",
-  "function getActiveQuests() external view returns (uint256[])",
-  "function getPendingSubmissions() external view returns (uint256[])",
-  "function getPlayerSubmissions(address player) external view returns (uint256[])",
-  "function hasPlayerCompletedQuest(address player, uint256 questId) external view returns (bool)",
-  "function isAdmin(address account) external view returns (bool)",
-  "function getDefaultQuestId() external pure returns (uint256)",
+  // ============ Custom Errors ============
+  {
+    "type": "error",
+    "name": "QuestManager__InvalidAddress",
+    "inputs": []
+  },
+  {
+    "type": "error", 
+    "name": "QuestManager__InvalidAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestNotFound", 
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestAlreadySubmitted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestNotSubmitted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestAlreadyCompleted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestAlreadyRejected",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__Unauthorized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__EmptyTweetUrl",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__InvalidQuestId",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__InsufficientPoolBalance",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestNotActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__SubmissionWindowClosed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__PlayerAlreadyCompleted",
+    "inputs": []
+  },
+  // ============ Functions ============
+  {
+    "type": "function",
+    "name": "submitQuest",
+    "inputs": [
+      {"name": "questId", "type": "uint256"},
+      {"name": "tweetUrl", "type": "string"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function", 
+    "name": "verifyQuest",
+    "inputs": [
+      {"name": "submissionId", "type": "uint256"},
+      {"name": "approved", "type": "bool"},
+      {"name": "rejectionReason", "type": "string"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getQuest", 
+    "inputs": [{"name": "questId", "type": "uint256"}],
+    "outputs": [{"name": "", "type": "tuple", "components": [
+      {"name": "questId", "type": "uint256"},
+      {"name": "title", "type": "string"},
+      {"name": "description", "type": "string"},
+      {"name": "requirements", "type": "string"},
+      {"name": "rewardAmount", "type": "uint256"},
+      {"name": "isActive", "type": "bool"},
+      {"name": "startTime", "type": "uint256"},
+      {"name": "endTime", "type": "uint256"},
+      {"name": "maxCompletions", "type": "uint256"},
+      {"name": "currentCompletions", "type": "uint256"},
+      {"name": "creator", "type": "address"},
+      {"name": "createTime", "type": "uint256"}
+    ]}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getSubmission",
+    "inputs": [{"name": "submissionId", "type": "uint256"}],
+    "outputs": [{"name": "", "type": "tuple", "components": [
+      {"name": "questId", "type": "uint256"},
+      {"name": "player", "type": "address"},
+      {"name": "tweetUrl", "type": "string"},
+      {"name": "submitTime", "type": "uint256"},
+      {"name": "status", "type": "uint8"},
+      {"name": "verifyTime", "type": "uint256"},
+      {"name": "verifiedBy", "type": "address"},
+      {"name": "nftTokenId", "type": "uint256"},
+      {"name": "rejectionReason", "type": "string"}
+    ]}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getActiveQuests",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "uint256[]"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", 
+    "name": "getPendingSubmissions",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "uint256[]"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPlayerSubmissions", 
+    "inputs": [{"name": "player", "type": "address"}],
+    "outputs": [{"name": "", "type": "uint256[]"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "hasPlayerCompletedQuest",
+    "inputs": [
+      {"name": "player", "type": "address"},
+      {"name": "questId", "type": "uint256"}
+    ],
+    "outputs": [{"name": "", "type": "bool"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isAdmin",
+    "inputs": [{"name": "account", "type": "address"}],
+    "outputs": [{"name": "", "type": "bool"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDefaultQuestId", 
+    "inputs": [],
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "pure"
+  }
 ] as const;
 
 const NFT_MINTER_ABI = [
@@ -101,10 +266,10 @@ export interface QuestBadge {
 // ============ Contract Addresses ============
 const getContractAddresses = () => {
   const addresses = {
-    stakingPool: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS || '',
-    questManager: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS || '',
-    nftMinter: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS || '',
-    usdcToken: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '',
+    stakingPool: (process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS || '').trim(),
+    questManager: (process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS || '').trim(),
+    nftMinter: (process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS || '').trim(),
+    usdcToken: (process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '').trim(),
   };
 
   console.log('Contract addresses loaded:', addresses);
@@ -254,10 +419,31 @@ export function useStakingPool() {
  * Hook for interacting with QuestManager contract
  */
 export function useQuestManager() {
-  const { questManager } = getContractAddresses();
+  const addresses = getContractAddresses();
+  const { questManager } = addresses;
+  
+  console.log('useQuestManager hook initializing:', {
+    questManager,
+    questManagerAddress: questManager || 'EMPTY',
+    allAddresses: addresses,
+    envVarsDirectly: {
+      QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+      STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+      NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+      USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+      THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
+    }
+  });
   
   // Contract instance
   const { contract } = useContract(questManager || '', QUEST_MANAGER_ABI);
+  
+  console.log('useQuestManager contract result:', {
+    contract: !!contract,
+    contractAddress: contract?.address,
+    questManagerParam: questManager,
+    contractObject: contract
+  });
   
   // Read functions
   const { data: activeQuests, refetch: refetchActiveQuests } = useContractRead(
@@ -395,10 +581,63 @@ export function useQuestManager() {
   }, [contract, questManager]);
 
   const submitQuestProof = useCallback(async (questId: number, tweetUrl: string) => {
-    if (!contract || !questManager) throw new Error("Contract not available or not configured");
+    console.log('submitQuestProof called with:', {
+      questId,
+      tweetUrl,
+      contract: !!contract,
+      contractDetails: {
+        exists: !!contract,
+        address: contract?.address,
+        type: typeof contract,
+        keys: contract ? Object.keys(contract) : 'NO_CONTRACT'
+      },
+      questManager,
+      questManagerType: typeof questManager,
+      questManagerValue: questManager,
+      submitQuest: typeof submitQuest,
+      submitQuestExists: !!submitQuest
+    });
+    
+    if (!contract) {
+      console.error('CONTRACT IS NULL/UNDEFINED:', {
+        contract,
+        contractType: typeof contract,
+        questManager,
+        questManagerType: typeof questManager,
+        allEnvVars: {
+          QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
+          STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
+          NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
+          USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
+          THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
+        }
+      });
+      throw new Error("Contract not available or not configured - contract is null");
+    }
+    
+    if (!questManager) {
+      console.error('QUEST_MANAGER ADDRESS IS EMPTY:', {
+        questManager,
+        questManagerType: typeof questManager,
+        contractExists: !!contract,
+        contractAddress: contract?.address,
+        envVar: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS
+      });
+      throw new Error("Contract not available or not configured - questManager address is empty");
+    }
+    
+    // Success: Both contract and questManager are available
+    console.log('SUCCESS: Contract and questManager are both available!', {
+      contractAddress: contract.address,
+      questManagerAddress: questManager,
+      submitQuestFunction: typeof submitQuest
+    });
+    alert('SUCCESS: Contract connection established! Proceeding with quest submission...');
     
     try {
+      console.log('About to call submitQuest with params:', [questId, tweetUrl]);
       const tx = await submitQuest([questId, tweetUrl]);
+      console.log('submitQuest transaction result:', tx);
       toast.success("Quest submitted successfully! Waiting for verification...");
       
       // Refetch data
@@ -407,6 +646,13 @@ export function useQuestManager() {
       return tx;
     } catch (error: any) {
       console.error("Submit quest error:", error);
+      console.error("Submit quest error details:", {
+        message: error?.message,
+        cause: error?.cause,
+        stack: error?.stack,
+        reason: error?.reason,
+        code: error?.code
+      });
       toast.error(error?.message || "Failed to submit quest");
       throw error;
     }

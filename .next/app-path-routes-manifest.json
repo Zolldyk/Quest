@@ -1,7 +1,7 @@
 {
   "/_not-found/page": "/_not-found",
-  "/quests/page": "/quests",
   "/page": "/",
+  "/staking/page": "/staking",
   "/dashboard/page": "/dashboard",
-  "/staking/page": "/staking"
+  "/quests/page": "/quests"
 }

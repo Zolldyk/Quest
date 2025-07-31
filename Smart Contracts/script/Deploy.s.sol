@@ -155,6 +155,10 @@ contract Deploy is Script {
             console2.log("NFTMinter base URI set:", config.baseURI);
         }
 
+        // Create the default quest
+        questManager.createDefaultQuest();
+        console2.log("Default quest created with ID:", questManager.getDefaultQuestId());
+
         // Leave contracts unpaused unless specified
         if (!config.shouldPause) {
             // QuestManager and NFTMinter start unpaused, so no action needed
