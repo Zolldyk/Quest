@@ -122,7 +122,7 @@ export default function SubmissionHistory() {
     };
 
     fetchSubmissionHistory();
-  }, [address]);
+  }, [address, getPlayerSubmissions, getSubmission, getQuest]);
 
   // ============ Computed Values ============
   

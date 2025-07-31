@@ -165,7 +165,7 @@ export default function StakesSummary() {
     };
 
     fetchStakingData();
-  }, [address, poolBalance, poolStats, stakingPoolAddress]);
+  }, [address, poolBalance, poolStats, stakingPoolAddress, getStakerInfo, getUSDCBalance, getAllowance]);
 
   // ============ Computed Values ============
   const needsApproval = useMemo(() => {

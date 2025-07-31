@@ -163,7 +163,7 @@ export default function UserDashboard() {
     };
 
     fetchDashboardData();
-  }, [address, contractsReady]);
+  }, [address, contractsReady, stakingPool.getStakerInfo, questManager.getPlayerSubmissions, nftMinter.getUserBadges]);
 
   // ============ JSX Return ============
   return (
