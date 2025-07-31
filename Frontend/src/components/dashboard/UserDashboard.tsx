@@ -1,7 +1,7 @@
 'use client';
 
 // ============ Imports ============
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAddress } from '../../hooks/useThirdwebV5';
 import { 
   CurrencyDollarIcon,
@@ -49,6 +49,11 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [recentSubmissions, setRecentSubmissions] = useState<QuestSubmission[]>([]);
 
+  // Memoize contract readiness to avoid unnecessary re-renders
+  const contractsReady = useMemo(() => {
+    return !!(stakingPool.contract && questManager.contract && nftMinter.contract);
+  }, [stakingPool.contract, questManager.contract, nftMinter.contract]);
+
   // ============ Tab Configuration ============
   const tabs: TabProps[] = [
     { id: 'overview', name: 'Overview', icon: ChartBarIcon },
@@ -69,7 +74,7 @@ export default function UserDashboard() {
       }
 
       // Check if contracts are available before proceeding
-      if (!stakingPool.contract || !questManager.contract || !nftMinter.contract) {
+      if (!contractsReady) {
         console.warn('Contracts not yet available, setting default stats');
         setStats({
           totalStaked: '0',
@@ -157,10 +162,8 @@ export default function UserDashboard() {
       }
     };
 
-    // Add a small delay to prevent too many rapid calls
-    const timeoutId = setTimeout(fetchDashboardData, 100);
-    return () => clearTimeout(timeoutId);
-  }, [address, stakingPool, questManager, nftMinter]);
+    fetchDashboardData();
+  }, [address, contractsReady]);
 
   // ============ JSX Return ============
   return (

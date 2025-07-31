@@ -74,6 +74,9 @@ export default function StakesSummary() {
 
   // ============ Effects ============
 
+  // Memoize stable references to prevent unnecessary re-renders
+  const stakingPoolAddress = useMemo(() => STAKING_POOL_ADDRESS, []);
+
   // Fetch staking data when address or pool data changes
   useEffect(() => {
     const fetchStakingData = async () => {
@@ -108,7 +111,7 @@ export default function StakesSummary() {
         
         // Get allowance with error handling
         try {
-          const allowance = await getAllowance(address, STAKING_POOL_ADDRESS);
+          const allowance = await getAllowance(address, stakingPoolAddress);
           if (allowance) currentAllowance = allowance;
         } catch (error) {
           console.warn('Failed to fetch allowance:', error);
@@ -162,7 +165,7 @@ export default function StakesSummary() {
     };
 
     fetchStakingData();
-  }, [address, poolBalance, poolStats, getStakerInfo, getUSDCBalance, getAllowance, STAKING_POOL_ADDRESS]);
+  }, [address, poolBalance, poolStats, stakingPoolAddress]);
 
   // ============ Computed Values ============
   const needsApproval = useMemo(() => {
@@ -192,10 +195,10 @@ export default function StakesSummary() {
     
     try {
       const amount = BigInt(quickAmount) * BigInt(Math.pow(10, USDC_DECIMALS));
-      await approveSpender(STAKING_POOL_ADDRESS, amount);
+      await approveSpender(stakingPoolAddress, amount);
       
       // Refresh allowance
-      const newAllowance = await getAllowance(address!, STAKING_POOL_ADDRESS);
+      const newAllowance = await getAllowance(address!, stakingPoolAddress);
       setAllowance(newAllowance || BigInt(0));
       
     } catch (error) {
