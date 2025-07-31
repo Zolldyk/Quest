@@ -17,6 +17,78 @@ const STAKING_POOL_ABI = [
 ] as const;
 
 const QUEST_MANAGER_ABI = [
+  // ============ Custom Errors ============
+  {
+    "type": "error",
+    "name": "QuestManager__InvalidAddress",
+    "inputs": []
+  },
+  {
+    "type": "error", 
+    "name": "QuestManager__InvalidAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestNotFound", 
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestAlreadySubmitted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestNotSubmitted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestAlreadyCompleted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestAlreadyRejected",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__Unauthorized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__EmptyTweetUrl",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__InvalidQuestId",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__InsufficientPoolBalance",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__QuestNotActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__SubmissionWindowClosed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuestManager__PlayerAlreadyCompleted",
+    "inputs": []
+  },
+  // ============ Functions ============
   {
     "type": "function",
     "name": "submitQuest",
