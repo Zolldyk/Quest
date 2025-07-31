@@ -33,43 +33,13 @@ export default function QuestSubmissionForm({
 }: QuestSubmissionFormProps) {
 
   // ============ Hooks ============
-  const questManagerHook = useQuestManager();
-  const { submitQuestProof, isSubmitting } = questManagerHook;
-  
-  console.log('QuestSubmissionForm rendered:', {
-    questManagerHook,
-    submitQuestProof: typeof submitQuestProof,
-    isSubmitting,
-    quest
-  });
-  
-  // Add alert to check if contracts are properly loaded
-  if (typeof window !== 'undefined') {
-    setTimeout(() => {
-      const addresses = {
-        questManager: (process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS || '').trim(),
-        stakingPool: (process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS || '').trim(),
-        nftMinter: (process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS || '').trim(),
-        usdcToken: (process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '').trim(),
-        thirdwebClientId: (process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || '').trim()
-      };
-      
-      alert(`QuestSubmissionForm loaded! submitQuestProof: ${typeof submitQuestProof}\nContract addresses (trimmed): ${JSON.stringify(addresses)}\nAll addresses valid: ${Object.values(addresses).every(addr => addr && addr.length > 0)}`);
-    }, 1000);
-  }
+  const { submitQuestProof, isSubmitting } = useQuestManager();
 
   // ============ State ============
   const [tweetUrl, setTweetUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [urlError, setUrlError] = useState('');
   const [step, setStep] = useState<'instructions' | 'submit'>('instructions');
-  
-  console.log('QuestSubmissionForm state:', {
-    step,
-    tweetUrl,
-    isValidUrl,
-    urlError
-  });
 
   // Handle escape key
   useEffect(() => {
@@ -126,47 +96,24 @@ export default function QuestSubmissionForm({
 
   // ============ Handlers ============
   const handleUrlChange = (value: string) => {
-    console.log('URL changed:', value);
     setTweetUrl(value);
     const validation = validateTweetUrl(value);
-    console.log('URL validation result:', validation);
     setIsValidUrl(validation.isValid);
     setUrlError(validation.error);
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called with:', {
-      isValidUrl,
-      tweetUrl: tweetUrl.trim(),
-      submitQuestProof: typeof submitQuestProof,
-      isSubmitting
-    });
-    alert('handleSubmit function called!');
-
     if (!isValidUrl || !tweetUrl.trim()) {
-      console.log('Validation failed:', { isValidUrl, tweetUrl: tweetUrl.trim() });
-      alert('Validation failed: URL not valid or empty');
       toast.error('Please provide a valid tweet URL');
       return;
     }
 
     if (!submitQuestProof) {
-      console.error('submitQuestProof function is not available!');
-      alert('submitQuestProof function not available!');
       toast.error('Contract connection not available. Please refresh and try again.');
       return;
     }
 
-    console.log('Quest submission starting:', {
-      questId: Number(quest.questId),
-      tweetUrl: tweetUrl.trim(),
-      quest: quest
-    });
-
     try {
-      console.log('Calling submitQuestProof...');
-      alert('About to call submitQuestProof with questId: ' + Number(quest.questId));
-      
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Submission timed out')), 30000)
@@ -174,23 +121,11 @@ export default function QuestSubmissionForm({
       
       const submissionPromise = submitQuestProof(Number(quest.questId), tweetUrl.trim());
       
-      const result = await Promise.race([submissionPromise, timeoutPromise]);
-      console.log('Quest submission result:', result);
-      alert('Quest submitted successfully!');
+      await Promise.race([submissionPromise, timeoutPromise]);
       
       toast.success('Quest submitted successfully! Check your dashboard for verification status.');
       onSuccess();
     } catch (error: any) {
-      console.error('Submission error:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        cause: error?.cause,
-        stack: error?.stack,
-        name: error?.name
-      });
-      
-      alert('Error occurred: ' + (error?.message || 'Unknown error'));
-      
       // Provide user-friendly error messages
       let errorMessage = 'Failed to submit quest. Please try again.';
       
@@ -199,10 +134,14 @@ export default function QuestSubmissionForm({
           errorMessage = 'Transaction was rejected. Please try again.';
         } else if (error.message.includes('insufficient')) {
           errorMessage = 'Insufficient funds for transaction fees.';
-        } else if (error.message.includes('already submitted')) {
+        } else if (error.message.includes('QuestManager__QuestAlreadySubmitted')) {
           errorMessage = 'You have already submitted this quest.';
-        } else if (error.message.includes('not active')) {
+        } else if (error.message.includes('QuestManager__PlayerAlreadyCompleted')) {
+          errorMessage = 'You have already completed this quest.';
+        } else if (error.message.includes('QuestManager__QuestNotActive')) {
           errorMessage = 'This quest is no longer active.';
+        } else if (error.message.includes('QuestManager__EmptyTweetUrl')) {
+          errorMessage = 'Please provide a valid tweet URL.';
         } else if (error.message.includes('network')) {
           errorMessage = 'Network error. Please check your connection and try again.';
         } else if (error.message.includes('Contract not available')) {
@@ -274,10 +213,7 @@ export default function QuestSubmissionForm({
           {step === 'instructions' ? (
             <InstructionsStep
               quest={quest}
-              onNext={() => {
-                console.log('Moving to submit step');
-                setStep('submit');
-              }}
+              onNext={() => setStep('submit')}
               onCopyHashtag={handleCopyHashtag}
               onCopyRequirements={handleCopyRequirements}
             />
@@ -290,10 +226,7 @@ export default function QuestSubmissionForm({
               isSubmitting={isSubmitting}
               onUrlChange={handleUrlChange}
               onSubmit={handleSubmit}
-              onBack={() => {
-                console.log('Moving back to instructions step');
-                setStep('instructions');
-              }}
+              onBack={() => setStep('instructions')}
             />
           )}
         </div>
@@ -429,7 +362,6 @@ function InstructionsStep({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Instructions step - next button clicked');
           onNext();
         }}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
@@ -557,23 +489,11 @@ function SubmissionStep({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Submit Quest button clicked!', {
-              isValidUrl,
-              isSubmitting,
-              disabled: !isValidUrl || isSubmitting,
-              onSubmit: typeof onSubmit,
-              tweetUrl
-            });
-            alert(`Submit Quest button clicked! Valid: ${isValidUrl}, Submitting: ${isSubmitting}`);
             
             if (!isValidUrl || isSubmitting) {
-              console.log('Button is disabled, not calling onSubmit');
-              alert('Button is disabled - URL not valid or already submitting');
               return;
             }
             
-            console.log('Calling onSubmit...');
-            alert('About to call onSubmit...');
             onSubmit();
           }}
           disabled={!isValidUrl || isSubmitting}

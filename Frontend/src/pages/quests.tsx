@@ -86,11 +86,7 @@ export default function QuestsPage() {
                   </div>
                   <div className="p-6">
                     <button
-                      onClick={() => {
-                        console.log('Submit Quest Proof button clicked - opening modal');
-                        alert('Submit Quest Proof button clicked!');
-                        setShowSubmissionForm(true);
-                      }}
+                      onClick={() => setShowSubmissionForm(true)}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
                     >
                       <TrophyIcon className="h-5 w-5 mr-2" />
@@ -120,8 +116,6 @@ export default function QuestsPage() {
                   onClose={() => setShowSubmissionForm(false)}
                   onSuccess={() => {
                     setShowSubmissionForm(false);
-                    // Show success message
-                    alert('Quest submitted successfully! Check your dashboard for verification status.');
                   }}
                 />
               )}

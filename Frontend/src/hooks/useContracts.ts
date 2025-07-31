@@ -272,30 +272,13 @@ const getContractAddresses = () => {
     usdcToken: (process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS || '').trim(),
   };
 
-  console.log('Contract addresses loaded:', addresses);
-  console.log('Environment check:', {
-    NODE_ENV: process.env.NODE_ENV,
-    VERCEL: process.env.VERCEL,
-    VERCEL_ENV: process.env.VERCEL_ENV,
-  });
-
-  // Validate addresses
+  // Validate addresses (silently)
   const missingAddresses = Object.entries(addresses)
     .filter(([, value]) => !value || value.trim() === '' || value === 'undefined')
     .map(([key]) => key);
 
   if (missingAddresses.length > 0) {
-    console.error(`Missing contract addresses: ${missingAddresses.join(', ')}`);
-    console.error('Please check your environment variables.');
-    console.error('Current env vars:', {
-      STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
-      QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
-      NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
-      USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
-    });
-    console.error('All process.env keys with NEXT_PUBLIC:', 
-      Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC'))
-    );
+    console.warn(`Missing contract addresses: ${missingAddresses.join(', ')}`);
   }
 
   return addresses;
@@ -422,28 +405,8 @@ export function useQuestManager() {
   const addresses = getContractAddresses();
   const { questManager } = addresses;
   
-  console.log('useQuestManager hook initializing:', {
-    questManager,
-    questManagerAddress: questManager || 'EMPTY',
-    allAddresses: addresses,
-    envVarsDirectly: {
-      QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
-      STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
-      NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
-      USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
-      THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
-    }
-  });
-  
   // Contract instance
   const { contract } = useContract(questManager || '', QUEST_MANAGER_ABI);
-  
-  console.log('useQuestManager contract result:', {
-    contract: !!contract,
-    contractAddress: contract?.address,
-    questManagerParam: questManager,
-    contractObject: contract
-  });
   
   // Read functions
   const { data: activeQuests, refetch: refetchActiveQuests } = useContractRead(
@@ -581,63 +544,16 @@ export function useQuestManager() {
   }, [contract, questManager]);
 
   const submitQuestProof = useCallback(async (questId: number, tweetUrl: string) => {
-    console.log('submitQuestProof called with:', {
-      questId,
-      tweetUrl,
-      contract: !!contract,
-      contractDetails: {
-        exists: !!contract,
-        address: contract?.address,
-        type: typeof contract,
-        keys: contract ? Object.keys(contract) : 'NO_CONTRACT'
-      },
-      questManager,
-      questManagerType: typeof questManager,
-      questManagerValue: questManager,
-      submitQuest: typeof submitQuest,
-      submitQuestExists: !!submitQuest
-    });
-    
     if (!contract) {
-      console.error('CONTRACT IS NULL/UNDEFINED:', {
-        contract,
-        contractType: typeof contract,
-        questManager,
-        questManagerType: typeof questManager,
-        allEnvVars: {
-          QUEST_MANAGER: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS,
-          STAKING_POOL: process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS,
-          NFT_MINTER: process.env.NEXT_PUBLIC_NFT_MINTER_ADDRESS,
-          USDC_TOKEN: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
-          THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
-        }
-      });
-      throw new Error("Contract not available or not configured - contract is null");
+      throw new Error("Contract not available or not configured");
     }
     
     if (!questManager) {
-      console.error('QUEST_MANAGER ADDRESS IS EMPTY:', {
-        questManager,
-        questManagerType: typeof questManager,
-        contractExists: !!contract,
-        contractAddress: contract?.address,
-        envVar: process.env.NEXT_PUBLIC_QUEST_MANAGER_ADDRESS
-      });
       throw new Error("Contract not available or not configured - questManager address is empty");
     }
     
-    // Success: Both contract and questManager are available
-    console.log('SUCCESS: Contract and questManager are both available!', {
-      contractAddress: contract.address,
-      questManagerAddress: questManager,
-      submitQuestFunction: typeof submitQuest
-    });
-    alert('SUCCESS: Contract connection established! Proceeding with quest submission...');
-    
     try {
-      console.log('About to call submitQuest with params:', [questId, tweetUrl]);
       const tx = await submitQuest([questId, tweetUrl]);
-      console.log('submitQuest transaction result:', tx);
       toast.success("Quest submitted successfully! Waiting for verification...");
       
       // Refetch data
@@ -645,14 +561,6 @@ export function useQuestManager() {
       
       return tx;
     } catch (error: any) {
-      console.error("Submit quest error:", error);
-      console.error("Submit quest error details:", {
-        message: error?.message,
-        cause: error?.cause,
-        stack: error?.stack,
-        reason: error?.reason,
-        code: error?.code
-      });
       toast.error(error?.message || "Failed to submit quest");
       throw error;
     }
