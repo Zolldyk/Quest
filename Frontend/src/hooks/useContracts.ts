@@ -17,16 +17,109 @@ const STAKING_POOL_ABI = [
 ] as const;
 
 const QUEST_MANAGER_ABI = [
-  "function submitQuest(uint256 questId, string tweetUrl) external",
-  "function verifyQuest(uint256 submissionId, bool approved, string rejectionReason) external",
-  "function getQuest(uint256 questId) external view returns (tuple(uint256,string,string,string,uint256,bool,uint256,uint256,uint256,uint256,address,uint256))",
-  "function getSubmission(uint256 submissionId) external view returns (tuple(uint256,address,string,uint256,uint8,uint256,address,uint256,string))",
-  "function getActiveQuests() external view returns (uint256[])",
-  "function getPendingSubmissions() external view returns (uint256[])",
-  "function getPlayerSubmissions(address player) external view returns (uint256[])",
-  "function hasPlayerCompletedQuest(address player, uint256 questId) external view returns (bool)",
-  "function isAdmin(address account) external view returns (bool)",
-  "function getDefaultQuestId() external pure returns (uint256)",
+  {
+    "type": "function",
+    "name": "submitQuest",
+    "inputs": [
+      {"name": "questId", "type": "uint256"},
+      {"name": "tweetUrl", "type": "string"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function", 
+    "name": "verifyQuest",
+    "inputs": [
+      {"name": "submissionId", "type": "uint256"},
+      {"name": "approved", "type": "bool"},
+      {"name": "rejectionReason", "type": "string"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getQuest", 
+    "inputs": [{"name": "questId", "type": "uint256"}],
+    "outputs": [{"name": "", "type": "tuple", "components": [
+      {"name": "questId", "type": "uint256"},
+      {"name": "title", "type": "string"},
+      {"name": "description", "type": "string"},
+      {"name": "requirements", "type": "string"},
+      {"name": "rewardAmount", "type": "uint256"},
+      {"name": "isActive", "type": "bool"},
+      {"name": "startTime", "type": "uint256"},
+      {"name": "endTime", "type": "uint256"},
+      {"name": "maxCompletions", "type": "uint256"},
+      {"name": "currentCompletions", "type": "uint256"},
+      {"name": "creator", "type": "address"},
+      {"name": "createTime", "type": "uint256"}
+    ]}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getSubmission",
+    "inputs": [{"name": "submissionId", "type": "uint256"}],
+    "outputs": [{"name": "", "type": "tuple", "components": [
+      {"name": "questId", "type": "uint256"},
+      {"name": "player", "type": "address"},
+      {"name": "tweetUrl", "type": "string"},
+      {"name": "submitTime", "type": "uint256"},
+      {"name": "status", "type": "uint8"},
+      {"name": "verifyTime", "type": "uint256"},
+      {"name": "verifiedBy", "type": "address"},
+      {"name": "nftTokenId", "type": "uint256"},
+      {"name": "rejectionReason", "type": "string"}
+    ]}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getActiveQuests",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "uint256[]"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", 
+    "name": "getPendingSubmissions",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "uint256[]"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPlayerSubmissions", 
+    "inputs": [{"name": "player", "type": "address"}],
+    "outputs": [{"name": "", "type": "uint256[]"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "hasPlayerCompletedQuest",
+    "inputs": [
+      {"name": "player", "type": "address"},
+      {"name": "questId", "type": "uint256"}
+    ],
+    "outputs": [{"name": "", "type": "bool"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isAdmin",
+    "inputs": [{"name": "account", "type": "address"}],
+    "outputs": [{"name": "", "type": "bool"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getDefaultQuestId", 
+    "inputs": [],
+    "outputs": [{"name": "", "type": "uint256"}],
+    "stateMutability": "pure"
+  }
 ] as const;
 
 const NFT_MINTER_ABI = [
