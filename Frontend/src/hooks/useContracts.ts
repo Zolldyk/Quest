@@ -587,7 +587,7 @@ export function useQuestManager() {
       
       console.log('✅ submitQuestProof: Transaction successful', {
         transactionHash: tx.transactionHash,
-        blockNumber: tx.blockNumber
+        chain: tx.chain?.id
       });
       
       toast.success("Quest submitted successfully! Waiting for verification...");
