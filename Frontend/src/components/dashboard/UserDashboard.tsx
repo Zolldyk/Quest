@@ -10,6 +10,7 @@ import {
   ChartBarIcon,
   EyeIcon,
   CalendarDaysIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 import { useContracts, formatTokenAmount, QuestSubmission } from '../../hooks/useContracts';
 import { CardSkeleton } from '../ui/LoadingSpinner';
@@ -137,6 +138,18 @@ export default function UserDashboard() {
         const totalEarnedAmount = completedCount * 1; // 1 USDC per quest (simplified)
         const pendingCount = validSubmissions.filter(s => s.status === 0).length;
 
+        console.log('📊 UserDashboard: Calculated stats', {
+          validSubmissions: validSubmissions.length,
+          completedCount,
+          pendingCount,
+          totalEarnedAmount,
+          submissionDetails: validSubmissions.map(s => ({
+            questId: s.questId?.toString(),
+            status: s.status,
+            submitTime: s.submitTime?.toString()
+          }))
+        });
+
         const dashboardStats: DashboardStats = {
           totalStaked: formatTokenAmount(stakerInfo?.stakedAmount || BigInt(0), 6),
           totalEarned: totalEarnedAmount.toString(),
@@ -145,6 +158,7 @@ export default function UserDashboard() {
           pendingSubmissions: pendingCount,
         };
 
+        console.log('📊 UserDashboard: Final dashboard stats', dashboardStats);
         setStats(dashboardStats);
 
       } catch (error) {
@@ -197,18 +211,18 @@ export default function UserDashboard() {
                 textColor="text-green-600"
               />
               <StatCard
-                title="Quests Completed"
-                value={stats?.questsCompleted?.toString() || '0'}
+                title="Quests Submitted"
+                value={((stats?.questsCompleted || 0) + (stats?.pendingSubmissions || 0)).toString()}
                 icon={<ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />}
                 bgColor="bg-purple-50"
                 textColor="text-purple-600"
               />
               <StatCard
-                title="NFT Badges"
-                value={stats?.nftBadges?.toString() || '0'}
-                icon={<StarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />}
-                bgColor="bg-orange-50"
-                textColor="text-orange-600"
+                title="Pending Review"
+                value={stats?.pendingSubmissions?.toString() || '0'}
+                icon={<ClockIcon className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />}
+                bgColor="bg-yellow-50"
+                textColor="text-yellow-600"
               />
             </div>
 

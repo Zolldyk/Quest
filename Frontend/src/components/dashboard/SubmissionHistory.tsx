@@ -173,6 +173,19 @@ export default function SubmissionHistory() {
     const rejected = submissions.filter(s => s.status === 2).length;
     const totalEarned = completed * 1; // 1 USDC per quest (simplified)
 
+    console.log('📊 SubmissionHistory: Calculated stats', {
+      total,
+      completed,
+      pending,
+      rejected,
+      totalEarned,
+      submissions: submissions.map(s => ({
+        questId: s.questId?.toString(),
+        status: s.status,
+        submitTime: s.submitTime?.toString()
+      }))
+    });
+
     return { total, completed, pending, rejected, totalEarned };
   }, [submissions]);
 
