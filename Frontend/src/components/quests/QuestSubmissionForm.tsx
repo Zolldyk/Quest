@@ -155,9 +155,9 @@ export default function QuestSubmissionForm({
         } else if (error.message.includes('insufficient')) {
           errorMessage = 'Insufficient funds for transaction fees.';
         } else if (error.message.includes('QuestManager__QuestAlreadySubmitted')) {
-          errorMessage = 'You have already submitted this quest.';
+          errorMessage = 'You have already submitted this quest. Check your dashboard for verification status.';
         } else if (error.message.includes('QuestManager__PlayerAlreadyCompleted')) {
-          errorMessage = 'You have already completed this quest.';
+          errorMessage = 'You have already completed this quest. Check your dashboard for your rewards.';
         } else if (error.message.includes('QuestManager__QuestNotActive')) {
           errorMessage = 'This quest is no longer active.';
         } else if (error.message.includes('QuestManager__EmptyTweetUrl')) {

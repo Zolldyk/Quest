@@ -172,7 +172,7 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
     };
 
     fetchQuestDetails();
-  }, [activeQuests, getQuest, hasPlayerCompleted, address, defaultQuestId]);
+  }, [activeQuests, address, defaultQuestId]);
 
   // ============ Handlers ============
 
