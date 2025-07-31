@@ -545,6 +545,29 @@ export function useQuestManager() {
     }
   }, [contract, questManager]);
 
+  const hasPlayerSubmitted = useCallback(async (playerAddress: string, questId: number): Promise<boolean> => {
+    if (!contract || !playerAddress || !questManager) return false;
+    
+    try {
+      // Get all player submissions
+      const submissions = await getPlayerSubmissions(playerAddress);
+      if (!submissions || submissions.length === 0) return false;
+      
+      // Check if any submission is for this quest
+      for (const submissionId of submissions) {
+        const submission = await getSubmission(Number(submissionId));
+        if (submission && Number(submission.questId) === questId) {
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error checking player submission:", error);
+      return false;
+    }
+  }, [contract, questManager, getPlayerSubmissions, getSubmission]);
+
   const checkIsAdmin = useCallback(async (address: string): Promise<boolean> => {
     if (!contract || !address || !questManager) return false;
     
@@ -661,6 +684,7 @@ export function useQuestManager() {
     getSubmission,
     getPlayerSubmissions,
     hasPlayerCompleted,
+    hasPlayerSubmitted,
     checkIsAdmin,
     submitQuestProof,
     verifyQuestSubmission,

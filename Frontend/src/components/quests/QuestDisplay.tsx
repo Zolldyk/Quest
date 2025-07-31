@@ -26,6 +26,7 @@ interface QuestCardProps {
   quest: Quest;
   userAddress?: string;
   hasCompleted: boolean;
+  hasSubmitted: boolean;
   canSubmit: boolean;
   onSubmit: () => void;
 }
@@ -44,12 +45,14 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
     defaultQuestId,
     getQuest,
     hasPlayerCompleted,
+    hasPlayerSubmitted,
     refetchActiveQuests 
   } = useQuestManager();
 
   // ============ State ============
   const [quests, setQuests] = useState<Quest[]>([]);
   const [completionStatus, setCompletionStatus] = useState<Record<string, boolean>>({});
+  const [submissionStatus, setSubmissionStatus] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
   const [showSubmissionForm, setShowSubmissionForm] = useState(false);
@@ -127,24 +130,38 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
         
         setQuests(validQuests);
         
-        // Check completion status for each quest if user is connected
+        // Check completion and submission status for each quest if user is connected
         if (address && validQuests.length > 0) {
           try {
-            const completionPromises = validQuests.map(async (quest) => {
+            const statusPromises = validQuests.map(async (quest) => {
               try {
-                const completed = await hasPlayerCompleted(address, Number(quest.questId));
-                return [quest.questId.toString(), completed] as const;
+                const [completed, submitted] = await Promise.all([
+                  hasPlayerCompleted(address, Number(quest.questId)),
+                  hasPlayerSubmitted(address, Number(quest.questId))
+                ]);
+                return {
+                  questId: quest.questId.toString(),
+                  completed,
+                  submitted
+                };
               } catch (error) {
-                console.warn(`Failed to check completion for quest ${quest.questId}:`, error);
-                return [quest.questId.toString(), false] as const;
+                console.warn(`Failed to check status for quest ${quest.questId}:`, error);
+                return {
+                  questId: quest.questId.toString(),
+                  completed: false,
+                  submitted: false
+                };
               }
             });
             
-            const completionChecks = await Promise.all(completionPromises);
-            const completionMap = Object.fromEntries(completionChecks);
+            const statusChecks = await Promise.all(statusPromises);
+            const completionMap = Object.fromEntries(statusChecks.map(s => [s.questId, s.completed]));
+            const submissionMap = Object.fromEntries(statusChecks.map(s => [s.questId, s.submitted]));
+            
             setCompletionStatus(completionMap);
+            setSubmissionStatus(submissionMap);
           } catch (error) {
-            console.warn('Error checking quest completion status:', error);
+            console.warn('Error checking quest status:', error);
           }
         }
         
@@ -253,7 +270,8 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
               quest={quest}
               userAddress={address}
               hasCompleted={completionStatus[quest.questId.toString()] || false}
-              canSubmit={!!address && !completionStatus[quest.questId.toString()]}
+              hasSubmitted={submissionStatus[quest.questId.toString()] || false}
+              canSubmit={!!address && !completionStatus[quest.questId.toString()] && !submissionStatus[quest.questId.toString()]}
               onSubmit={() => handleQuestSubmit(quest)}
             />
           ))}
@@ -326,6 +344,7 @@ function QuestCard({
   quest, 
   userAddress, 
   hasCompleted, 
+  hasSubmitted,
   canSubmit, 
   onSubmit 
 }: QuestCardProps) {
@@ -344,6 +363,7 @@ function QuestCard({
   // Determine card status
   const getCardStatus = () => {
     if (hasCompleted) return 'completed';
+    if (hasSubmitted) return 'submitted';
     if (isExpired) return 'expired';
     if (isFull) return 'full';
     if (!userAddress) return 'connect-required';
@@ -355,6 +375,7 @@ function QuestCard({
   // Status styling
   const statusStyles = {
     completed: 'border-green-200 bg-green-50',
+    submitted: 'border-yellow-200 bg-yellow-50',
     expired: 'border-gray-200 bg-gray-50',
     full: 'border-orange-200 bg-orange-50',
     'connect-required': 'border-gray-200 bg-white',
@@ -375,12 +396,18 @@ function QuestCard({
             Completed
           </div>
         )}
-        {isExpired && !hasCompleted && (
+        {hasSubmitted && !hasCompleted && (
+          <div className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full flex items-center">
+            <ClockIcon className="h-3 w-3 mr-1" />
+            Pending Review
+          </div>
+        )}
+        {isExpired && !hasCompleted && !hasSubmitted && (
           <div className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-1 rounded-full">
             Expired
           </div>
         )}
-        {isFull && !hasCompleted && !isExpired && (
+        {isFull && !hasCompleted && !hasSubmitted && !isExpired && (
           <div className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
             Full
           </div>
@@ -471,6 +498,14 @@ function QuestCard({
           >
             <CheckCircleIcon className="h-4 w-4 inline mr-2" />
             Quest Completed
+          </button>
+        ) : hasSubmitted ? (
+          <button 
+            className="w-full bg-yellow-100 text-yellow-800 font-medium py-3 px-4 rounded-lg cursor-default"
+            disabled
+          >
+            <ClockIcon className="h-4 w-4 inline mr-2" />
+            Submitted - Awaiting Review
           </button>
         ) : isExpired ? (
           <button 
