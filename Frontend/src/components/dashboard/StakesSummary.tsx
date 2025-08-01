@@ -1,7 +1,7 @@
 'use client';
 
 // ============ Imports ============
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAddress } from '../../hooks/useThirdwebV5';
 import {
   CurrencyDollarIcon,
@@ -77,95 +77,125 @@ export default function StakesSummary() {
   // Memoize stable references to prevent unnecessary re-renders
   const stakingPoolAddress = useMemo(() => STAKING_POOL_ADDRESS, []);
 
+  // Force refresh trigger to update data when needed
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // Function to force refresh staking data
+  const forceRefresh = useCallback(() => {
+    console.log('🔄 StakesSummary: Force refreshing staking data');
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
   // Fetch staking data when address or pool data changes
-  useEffect(() => {
-    const fetchStakingData = async () => {
-      if (!address) {
-        setStakingData(null);
-        setIsLoading(false);
-        return;
-      }
+  const fetchStakingData = useCallback(async () => {
+    if (!address) {
+      setStakingData(null);
+      setIsLoading(false);
+      return;
+    }
 
-      setIsLoading(true);
+    setIsLoading(true);
 
+    try {
+      console.log('📊 StakesSummary: Starting data fetch for address:', address);
+      
+      // Initialize default values
+      let stakerInfo = null;
+      let usdcBalance = BigInt(0);
+      let currentAllowance = BigInt(0);
+
+      // Get user's staking info with error handling
       try {
-        // Initialize default values
-        let stakerInfo = null;
-        let usdcBalance = BigInt(0);
-        let currentAllowance = BigInt(0);
-
-        // Get user's staking info with error handling
-        try {
-          stakerInfo = await getStakerInfo(address);
-        } catch (error) {
-          console.warn('Failed to fetch staker info:', error);
-        }
-        
-        // Get user's USDC balance with error handling
-        try {
-          const balance = await getUSDCBalance(address);
-          if (balance) usdcBalance = balance;
-        } catch (error) {
-          console.warn('Failed to fetch USDC balance:', error);
-        }
-        
-        // Get allowance with error handling
-        try {
-          const allowance = await getAllowance(address, stakingPoolAddress);
-          if (allowance) currentAllowance = allowance;
-        } catch (error) {
-          console.warn('Failed to fetch allowance:', error);
-        }
-        
-        // Calculate staking share
-        const totalPool = poolBalance || BigInt(0);
-        const userStaked = stakerInfo?.stakedAmount || BigInt(0);
-        const stakingShare = totalPool > BigInt(0) 
-          ? (Number(userStaked) / Number(totalPool)) * 100 
-          : 0;
-
-        // Mock staking history (in production, get from subgraph/events)
-        const mockHistory: StakingEvent[] = stakerInfo?.isActive ? [
-          {
-            type: 'stake',
-            amount: formatTokenAmount(stakerInfo.stakedAmount, USDC_DECIMALS),
-            timestamp: Number(stakerInfo.stakeTimestamp) * 1000,
-          }
-        ] : [];
-
-        const data: StakingData = {
-          stakerInfo,
-          poolStats: poolStats ? {
-            totalPoolBalance: poolStats[0],
-            totalStakers: poolStats[1], 
-            totalRewardsDistributed: poolStats[2],
-            minimumStakeAmount: poolStats[3],
-          } : null,
-          userBalance: formatTokenAmount(usdcBalance, USDC_DECIMALS),
-          stakingShare,
-          stakingHistory: mockHistory,
-        };
-
-        setStakingData(data);
-        setAllowance(currentAllowance);
-
+        stakerInfo = await getStakerInfo(address);
       } catch (error) {
-        console.error('Error fetching staking data:', error);
-        // Don't show error toast, let the component handle empty state gracefully
-        setStakingData({
-          stakerInfo: null,
-          poolStats: null,
-          userBalance: '0',
-          stakingShare: 0,
-          stakingHistory: [],
-        });
-      } finally {
-        setIsLoading(false);
+        console.warn('Failed to fetch staker info:', error);
       }
-    };
+      
+      // Get user's USDC balance with error handling
+      try {
+        const balance = await getUSDCBalance(address);
+        if (balance) usdcBalance = balance;
+      } catch (error) {
+        console.warn('Failed to fetch USDC balance:', error);
+      }
+      
+      // Get allowance with error handling
+      try {
+        const allowance = await getAllowance(address, stakingPoolAddress);
+        if (allowance) currentAllowance = allowance;
+      } catch (error) {
+        console.warn('Failed to fetch allowance:', error);
+      }
+      
+      // Calculate staking share
+      const totalPool = poolBalance || BigInt(0);
+      const userStaked = stakerInfo?.stakedAmount || BigInt(0);
+      const stakingShare = totalPool > BigInt(0) 
+        ? (Number(userStaked) / Number(totalPool)) * 100 
+        : 0;
 
-    fetchStakingData();
+      // Mock staking history (in production, get from subgraph/events)
+      const mockHistory: StakingEvent[] = stakerInfo?.isActive ? [
+        {
+          type: 'stake',
+          amount: formatTokenAmount(stakerInfo.stakedAmount, USDC_DECIMALS),
+          timestamp: Number(stakerInfo.stakeTimestamp) * 1000,
+        }
+      ] : [];
+
+      const data: StakingData = {
+        stakerInfo,
+        poolStats: poolStats ? {
+          totalPoolBalance: poolStats[0],
+          totalStakers: poolStats[1], 
+          totalRewardsDistributed: poolStats[2],
+          minimumStakeAmount: poolStats[3],
+        } : null,
+        userBalance: formatTokenAmount(usdcBalance, USDC_DECIMALS),
+        stakingShare,
+        stakingHistory: mockHistory,
+      };
+
+      console.log('📊 StakesSummary: Processed staking data', {
+        stakerInfo: !!stakerInfo,
+        userBalance: data.userBalance,
+        stakingShare: data.stakingShare
+      });
+
+      setStakingData(data);
+      setAllowance(currentAllowance);
+
+    } catch (error) {
+      console.error('Error fetching staking data:', error);
+      // Don't show error toast, let the component handle empty state gracefully
+      setStakingData({
+        stakerInfo: null,
+        poolStats: null,
+        userBalance: '0',
+        stakingShare: 0,
+        stakingHistory: [],
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [address, poolBalance, poolStats, stakingPoolAddress, getStakerInfo, getUSDCBalance, getAllowance]);
+
+  // Effect to fetch data when dependencies change
+  useEffect(() => {
+    fetchStakingData();
+  }, [fetchStakingData, refreshTrigger]);
+
+  // Effect to force refresh when address changes (wallet connects/disconnects)
+  useEffect(() => {
+    if (address) {
+      console.log('🔄 StakesSummary: Address changed, forcing refresh');
+      // Small delay to ensure contracts are ready
+      const timer = setTimeout(() => {
+        forceRefresh();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [address, forceRefresh]);
 
   // ============ Computed Values ============
   const needsApproval = useMemo(() => {

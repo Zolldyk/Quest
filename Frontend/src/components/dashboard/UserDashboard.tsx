@@ -65,119 +65,152 @@ export default function UserDashboard() {
 
   // ============ Effects ============
 
+  // Force refresh trigger to update data when needed
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // Function to force refresh all dashboard data
+  const forceRefresh = useCallback(() => {
+    console.log('🔄 UserDashboard: Force refreshing dashboard data');
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
   // Fetch user dashboard data with optimized parallel loading
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!address) {
-        setStats(null);
-        setIsLoading(false);
-        return;
-      }
+  const fetchDashboardData = useCallback(async () => {
+    if (!address) {
+      setStats(null);
+      setRecentSubmissions([]);
+      setIsLoading(false);
+      return;
+    }
 
-      // Check if contracts are available before proceeding
-      if (!contractsReady) {
-        console.warn('Contracts not yet available, setting default stats');
-        setStats({
-          totalStaked: '0',
-          totalEarned: '0',
-          questsCompleted: 0,
-          nftBadges: 0,
-          pendingSubmissions: 0,
-        });
-        setIsLoading(false);
-        return;
-      }
+    // Check if contracts are available before proceeding
+    if (!contractsReady) {
+      console.warn('Contracts not yet available, setting default stats');
+      setStats({
+        totalStaked: '0',
+        totalEarned: '0',
+        questsCompleted: 0,
+        nftBadges: 0,
+        pendingSubmissions: 0,
+      });
+      setRecentSubmissions([]);
+      setIsLoading(false);
+      return;
+    }
 
-      setIsLoading(true);
+    setIsLoading(true);
 
-      try {
-        // Execute all contract calls in parallel for better performance
-        const [stakerInfoResult, submissionIdsResult, badgeCountResult] = await Promise.allSettled([
-          stakingPool.getStakerInfo(address).catch(error => {
-            console.warn('Failed to fetch staker info:', error);
-            return null;
-          }),
-          questManager.getPlayerSubmissions(address).catch(error => {
-            console.warn('Failed to fetch user submissions:', error);
-            return [];
-          }),
-          nftMinter.getUserBadges(address).catch(error => {
-            console.warn('Failed to fetch user badges:', error);
-            return [];
-          })
-        ]);
+    try {
+      console.log('📊 UserDashboard: Starting data fetch for address:', address);
+      
+      // Execute all contract calls in parallel for better performance
+      const [stakerInfoResult, submissionIdsResult, badgeCountResult] = await Promise.allSettled([
+        stakingPool.getStakerInfo(address).catch(error => {
+          console.warn('Failed to fetch staker info:', error);
+          return null;
+        }),
+        questManager.getPlayerSubmissions(address).catch(error => {
+          console.warn('Failed to fetch user submissions:', error);
+          return [];
+        }),
+        nftMinter.getUserBadges(address).catch(error => {
+          console.warn('Failed to fetch user badges:', error);
+          return [];
+        })
+      ]);
 
-        // Extract results
-        const stakerInfo = stakerInfoResult.status === 'fulfilled' ? stakerInfoResult.value : null;
-        const submissionIds = submissionIdsResult.status === 'fulfilled' ? submissionIdsResult.value : [];
-        const userBadges = badgeCountResult.status === 'fulfilled' ? badgeCountResult.value : [];
+      // Extract results
+      const stakerInfo = stakerInfoResult.status === 'fulfilled' ? stakerInfoResult.value : null;
+      const submissionIds = submissionIdsResult.status === 'fulfilled' ? submissionIdsResult.value : [];
+      const userBadges = badgeCountResult.status === 'fulfilled' ? badgeCountResult.value : [];
 
-        // Fetch submissions in parallel (limit to prevent rate limiting)
-        let validSubmissions: QuestSubmission[] = [];
-        if (submissionIds && submissionIds.length > 0) {
-          // Limit to last 10 submissions for performance
-          const recentIds = submissionIds.slice(-10);
-          const submissionResults = await Promise.allSettled(
-            recentIds.map((id: any) => 
-              questManager.getSubmission(Number(id)).catch(error => {
-                console.warn(`Failed to fetch submission ${id}:`, error);
-                return null;
-              })
-            )
-          );
-          
-          validSubmissions = submissionResults
-            .filter(result => result.status === 'fulfilled' && result.value !== null)
-            .map(result => (result as PromiseFulfilledResult<QuestSubmission>).value);
-        }
+      console.log('📊 UserDashboard: Raw data fetched', {
+        stakerInfo: !!stakerInfo,
+        submissionIdsCount: submissionIds?.length || 0,
+        userBadgesCount: userBadges?.length || 0
+      });
+
+      // Fetch submissions in parallel (limit to prevent rate limiting)
+      let validSubmissions: QuestSubmission[] = [];
+      if (submissionIds && submissionIds.length > 0) {
+        // Limit to last 10 submissions for performance
+        const recentIds = submissionIds.slice(-10);
+        const submissionResults = await Promise.allSettled(
+          recentIds.map((id: any) => 
+            questManager.getSubmission(Number(id)).catch(error => {
+              console.warn(`Failed to fetch submission ${id}:`, error);
+              return null;
+            })
+          )
+        );
         
-        setRecentSubmissions(validSubmissions.slice(-5)); // Last 5 submissions
-
-        // Calculate stats
-        const completedCount = validSubmissions.filter(s => s.status === 1).length;
-        const totalEarnedAmount = completedCount * 1; // 1 USDC per quest (simplified)
-        const pendingCount = validSubmissions.filter(s => s.status === 0).length;
-
-        console.log('📊 UserDashboard: Calculated stats', {
-          validSubmissions: validSubmissions.length,
-          completedCount,
-          pendingCount,
-          totalEarnedAmount,
-          submissionDetails: validSubmissions.map(s => ({
-            questId: s.questId?.toString(),
-            status: s.status,
-            submitTime: s.submitTime?.toString()
-          }))
-        });
-
-        const dashboardStats: DashboardStats = {
-          totalStaked: formatTokenAmount(stakerInfo?.stakedAmount || BigInt(0), 6),
-          totalEarned: totalEarnedAmount.toString(),
-          questsCompleted: completedCount,
-          nftBadges: userBadges?.length || 0,
-          pendingSubmissions: pendingCount,
-        };
-
-        console.log('📊 UserDashboard: Final dashboard stats', dashboardStats);
-        setStats(dashboardStats);
-
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        // Set default stats on error to prevent complete failure
-        setStats({
-          totalStaked: '0',
-          totalEarned: '0',
-          questsCompleted: 0,
-          nftBadges: 0,
-          pendingSubmissions: 0,
-        });
-      } finally {
-        setIsLoading(false);
+        validSubmissions = submissionResults
+          .filter(result => result.status === 'fulfilled' && result.value !== null)
+          .map(result => (result as PromiseFulfilledResult<QuestSubmission>).value);
       }
-    };
+      
+      setRecentSubmissions(validSubmissions.slice(-5)); // Last 5 submissions
 
+      // Calculate stats
+      const completedCount = validSubmissions.filter(s => s.status === 1).length;
+      const totalEarnedAmount = completedCount * 1; // 1 USDC per quest (simplified)
+      const pendingCount = validSubmissions.filter(s => s.status === 0).length;
+
+      console.log('📊 UserDashboard: Calculated stats', {
+        validSubmissions: validSubmissions.length,
+        completedCount,
+        pendingCount,
+        totalEarnedAmount,
+        submissionDetails: validSubmissions.map(s => ({
+          questId: s.questId?.toString(),
+          status: s.status,
+          submitTime: s.submitTime?.toString()
+        }))
+      });
+
+      const dashboardStats: DashboardStats = {
+        totalStaked: formatTokenAmount(stakerInfo?.stakedAmount || BigInt(0), 6),
+        totalEarned: totalEarnedAmount.toString(),
+        questsCompleted: completedCount,
+        nftBadges: userBadges?.length || 0,
+        pendingSubmissions: pendingCount,
+      };
+
+      console.log('📊 UserDashboard: Final dashboard stats', dashboardStats);
+      setStats(dashboardStats);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Set default stats on error to prevent complete failure
+      setStats({
+        totalStaked: '0',
+        totalEarned: '0',
+        questsCompleted: 0,
+        nftBadges: 0,
+        pendingSubmissions: 0,
+      });
+      setRecentSubmissions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [address, contractsReady, stakingPool, questManager, nftMinter]);
+
+  // Effect to fetch data when dependencies change
+  useEffect(() => {
     fetchDashboardData();
-  }, [address, contractsReady, stakingPool.getStakerInfo, questManager.getPlayerSubmissions, nftMinter.getUserBadges]);
+  }, [fetchDashboardData, refreshTrigger]);
+
+  // Effect to force refresh when address changes (wallet connects/disconnects)
+  useEffect(() => {
+    if (address) {
+      console.log('🔄 UserDashboard: Address changed, forcing refresh');
+      // Small delay to ensure contracts are ready
+      const timer = setTimeout(() => {
+        forceRefresh();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [address, forceRefresh]);
 
   // ============ JSX Return ============
   return (

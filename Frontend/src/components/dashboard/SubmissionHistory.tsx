@@ -1,7 +1,7 @@
 'use client';
 
 // ============ Imports ============
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAddress } from '../../hooks/useThirdwebV5';
 import {
   TrophyIcon,
@@ -56,73 +56,99 @@ export default function SubmissionHistory() {
 
   // ============ Effects ============
 
+  // Force refresh trigger to update data when needed
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // Function to force refresh submission history data
+  const forceRefresh = useCallback(() => {
+    console.log('🔄 SubmissionHistory: Force refreshing submission data');
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
   // Fetch submission history when address changes
-  useEffect(() => {
-    const fetchSubmissionHistory = async () => {
-      if (!address) {
+  const fetchSubmissionHistory = useCallback(async () => {
+    if (!address) {
+      setSubmissions([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log('📊 SubmissionHistory: Starting data fetch for address:', address);
+      
+      // Get user's submission IDs with error handling
+      let submissionIds: bigint[] = [];
+      try {
+        const ids = await getPlayerSubmissions(address);
+        submissionIds = ids || [];
+        console.log('📊 SubmissionHistory: Found submission IDs:', submissionIds.length);
+      } catch (error) {
+        console.warn('Failed to fetch player submissions:', error);
+      }
+      
+      if (submissionIds.length === 0) {
         setSubmissions([]);
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(true);
-
-      try {
-        // Get user's submission IDs with error handling
-        let submissionIds: bigint[] = [];
+      // Fetch detailed submission data with individual error handling
+      const submissionPromises = submissionIds.map(async (id: any) => {
         try {
-          const ids = await getPlayerSubmissions(address);
-          submissionIds = ids || [];
-        } catch (error) {
-          console.warn('Failed to fetch player submissions:', error);
-        }
-        
-        if (submissionIds.length === 0) {
-          setSubmissions([]);
-          setIsLoading(false);
-          return;
-        }
+          const submission = await getSubmission(Number(id));
+          if (!submission) return null;
 
-        // Fetch detailed submission data with individual error handling
-        const submissionPromises = submissionIds.map(async (id: any) => {
+          // Fetch quest details for each submission with error handling
+          let questDetails = null;
           try {
-            const submission = await getSubmission(Number(id));
-            if (!submission) return null;
-
-            // Fetch quest details for each submission with error handling
-            let questDetails = null;
-            try {
-              questDetails = await getQuest(Number(submission.questId));
-            } catch (error) {
-              console.warn(`Failed to fetch quest details for quest ${submission.questId}:`, error);
-            }
-            
-            return {
-              ...submission,
-              questDetails,
-            } as SubmissionWithQuest;
+            questDetails = await getQuest(Number(submission.questId));
           } catch (error) {
-            console.warn(`Failed to fetch submission ${id}:`, error);
-            return null;
+            console.warn(`Failed to fetch quest details for quest ${submission.questId}:`, error);
           }
-        });
+          
+          return {
+            ...submission,
+            questDetails,
+          } as SubmissionWithQuest;
+        } catch (error) {
+          console.warn(`Failed to fetch submission ${id}:`, error);
+          return null;
+        }
+      });
 
-        const submissionsData = await Promise.all(submissionPromises);
-        const validSubmissions = submissionsData.filter(s => s !== null) as SubmissionWithQuest[];
-        
-        setSubmissions(validSubmissions);
+      const submissionsData = await Promise.all(submissionPromises);
+      const validSubmissions = submissionsData.filter(s => s !== null) as SubmissionWithQuest[];
+      
+      console.log('📊 SubmissionHistory: Processed submissions:', validSubmissions.length);
+      setSubmissions(validSubmissions);
 
-      } catch (error) {
-        console.error('Error fetching submission history:', error);
-        // Set empty array on error to show empty state
-        setSubmissions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSubmissionHistory();
+    } catch (error) {
+      console.error('Error fetching submission history:', error);
+      // Set empty array on error to show empty state
+      setSubmissions([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [address, getPlayerSubmissions, getSubmission, getQuest]);
+
+  // Effect to fetch data when dependencies change
+  useEffect(() => {
+    fetchSubmissionHistory();
+  }, [fetchSubmissionHistory, refreshTrigger]);
+
+  // Effect to force refresh when address changes (wallet connects/disconnects)
+  useEffect(() => {
+    if (address) {
+      console.log('🔄 SubmissionHistory: Address changed, forcing refresh');
+      // Small delay to ensure contracts are ready
+      const timer = setTimeout(() => {
+        forceRefresh();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [address, forceRefresh]);
 
   // ============ Computed Values ============
   
