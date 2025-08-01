@@ -75,7 +75,7 @@ export default function SubmissionHistory() {
         try {
           const ids = await getPlayerSubmissions(address);
           submissionIds = ids || [];
-          console.log('📊 SubmissionHistory: Found submission IDs:', submissionIds.length);
+          console.log('📊 SubmissionHistory: Found submission IDs:', submissionIds.length, submissionIds);
         } catch (error) {
           console.warn('Failed to fetch player submissions:', error);
         }

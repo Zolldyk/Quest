@@ -69,6 +69,13 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
         defaultQuestId
       });
       
+      // Wait for activeQuests to be defined (not undefined)
+      if (activeQuests === undefined) {
+        console.log('⏳ QuestDisplay: activeQuests undefined, waiting...');
+        setIsLoading(true);
+        return;
+      }
+      
       setIsLoading(true);
       
       try {

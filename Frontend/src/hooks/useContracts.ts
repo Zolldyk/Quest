@@ -326,42 +326,50 @@ export function useStakingPool() {
   const { mutateAsync: stake, isPending: isStaking } = useContractWrite(contract, "stake");
   const { mutateAsync: unstake, isPending: isUnstaking } = useContractWrite(contract, "unstake");
   
-  // Helper functions
-  const getStakerInfo = useCallback(async (address: string): Promise<StakerInfo | null> => {
+  // Helper functions with retry logic
+  const getStakerInfo = useCallback(async (address: string, retries = 3): Promise<StakerInfo | null> => {
     if (!contract || !address || !stakingPool) return null;
     
-    try {
-      const { readContract } = await import('thirdweb');
-      const result = await readContract({
-        contract,
-        method: "getStakerInfo",
-        params: [address]
-      });
-      
-      if (result && Array.isArray(result) && result.length >= 4) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { readContract } = await import('thirdweb');
+        const result = await readContract({
+          contract,
+          method: "getStakerInfo",
+          params: [address]
+        });
+        
+        if (result && Array.isArray(result) && result.length >= 4) {
+          return {
+            stakedAmount: result[0] as bigint,
+            stakeTimestamp: result[1] as bigint,
+            lastUpdateTime: result[2] as bigint,
+            isActive: result[3] as boolean,
+          };
+        }
+        
         return {
-          stakedAmount: result[0] as bigint,
-          stakeTimestamp: result[1] as bigint,
-          lastUpdateTime: result[2] as bigint,
-          isActive: result[3] as boolean,
+          stakedAmount: BigInt(0),
+          stakeTimestamp: BigInt(0),
+          lastUpdateTime: BigInt(0),
+          isActive: false,
         };
+      } catch (error) {
+        console.warn(`StakingPool.getStakerInfo attempt ${attempt}/${retries} failed:`, error);
+        if (attempt === retries) {
+          console.error("Final attempt failed for getStakerInfo:", error);
+          return {
+            stakedAmount: BigInt(0),
+            stakeTimestamp: BigInt(0),
+            lastUpdateTime: BigInt(0),
+            isActive: false,
+          };
+        }
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
       }
-      
-      return {
-        stakedAmount: BigInt(0),
-        stakeTimestamp: BigInt(0),
-        lastUpdateTime: BigInt(0),
-        isActive: false,
-      };
-    } catch (error) {
-      console.error("Error fetching staker info:", error);
-      return {
-        stakedAmount: BigInt(0),
-        stakeTimestamp: BigInt(0),
-        lastUpdateTime: BigInt(0),
-        isActive: false,
-      };
     }
+    return null;
   }, [contract, stakingPool]);
 
   const stakeTokens = useCallback(async (amount: bigint) => {
@@ -497,53 +505,69 @@ export function useQuestManager() {
     }
   }, [contract, questManager]);
 
-  const getSubmission = useCallback(async (submissionId: number): Promise<QuestSubmission | null> => {
+  const getSubmission = useCallback(async (submissionId: number, retries = 3): Promise<QuestSubmission | null> => {
     if (!contract || !questManager) return null;
     
-    try {
-      const { readContract } = await import('thirdweb');
-      const result = await readContract({
-        contract,
-        method: "getSubmission",
-        params: [submissionId]
-      });
-      
-      if (result && Array.isArray(result) && result.length >= 9) {
-        return {
-          questId: result[0] as bigint,
-          player: result[1] as string,
-          tweetUrl: result[2] as string,
-          submitTime: result[3] as bigint,
-          status: result[4] as number,
-          verifyTime: result[5] as bigint,
-          verifiedBy: result[6] as string,
-          nftTokenId: result[7] as bigint,
-          rejectionReason: result[8] as string,
-        };
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { readContract } = await import('thirdweb');
+        const result = await readContract({
+          contract,
+          method: "getSubmission",
+          params: [submissionId]
+        });
+        
+        if (result && Array.isArray(result) && result.length >= 9) {
+          return {
+            questId: result[0] as bigint,
+            player: result[1] as string,
+            tweetUrl: result[2] as string,
+            submitTime: result[3] as bigint,
+            status: result[4] as number,
+            verifyTime: result[5] as bigint,
+            verifiedBy: result[6] as string,
+            nftTokenId: result[7] as bigint,
+            rejectionReason: result[8] as string,
+          };
+        }
+        
+        return null;
+      } catch (error) {
+        console.warn(`QuestManager.getSubmission(${submissionId}) attempt ${attempt}/${retries} failed:`, error);
+        if (attempt === retries) {
+          console.error(`Final attempt failed for getSubmission(${submissionId}):`, error);
+          return null;
+        }
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
       }
-      
-      return null;
-    } catch (error) {
-      console.error("Error fetching submission:", error);
-      return null;
     }
+    return null;
   }, [contract, questManager]);
 
-  const getPlayerSubmissions = useCallback(async (playerAddress: string): Promise<bigint[] | null> => {
+  const getPlayerSubmissions = useCallback(async (playerAddress: string, retries = 3): Promise<bigint[] | null> => {
     if (!contract || !playerAddress || !questManager) return null;
     
-    try {
-      const { readContract } = await import('thirdweb');
-      const result = await readContract({
-        contract,
-        method: "getPlayerSubmissions",
-        params: [playerAddress]
-      });
-      return result as bigint[];
-    } catch (error) {
-      console.error("Error fetching player submissions:", error);
-      return [];
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { readContract } = await import('thirdweb');
+        const result = await readContract({
+          contract,
+          method: "getPlayerSubmissions",
+          params: [playerAddress]
+        });
+        return result as bigint[];
+      } catch (error) {
+        console.warn(`QuestManager.getPlayerSubmissions attempt ${attempt}/${retries} failed:`, error);
+        if (attempt === retries) {
+          console.error("Final attempt failed for getPlayerSubmissions:", error);
+          return [];
+        }
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
     }
+    return [];
   }, [contract, questManager]);
 
   const hasPlayerCompleted = useCallback(async (playerAddress: string, questId: number): Promise<boolean> => {
@@ -727,21 +751,29 @@ export function useNFTMinter() {
   const { data: totalSupply } = useContractRead(contract, "totalSupply");
 
   // Helper functions
-  const getUserBadges = useCallback(async (userAddress: string): Promise<bigint[] | null> => {
+  const getUserBadges = useCallback(async (userAddress: string, retries = 3): Promise<bigint[] | null> => {
     if (!contract || !userAddress || !nftMinter) return null;
     
-    try {
-      const { readContract } = await import('thirdweb');
-      const result = await readContract({
-        contract,
-        method: "getUserBadges",
-        params: [userAddress]
-      });
-      return result as bigint[];
-    } catch (error) {
-      console.error("Error fetching user badges:", error);
-      return [];
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { readContract } = await import('thirdweb');
+        const result = await readContract({
+          contract,
+          method: "getUserBadges",
+          params: [userAddress]
+        });
+        return result as bigint[];
+      } catch (error) {
+        console.warn(`NFTMinter.getUserBadges attempt ${attempt}/${retries} failed:`, error);
+        if (attempt === retries) {
+          console.error("Final attempt failed for getUserBadges:", error);
+          return [];
+        }
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
     }
+    return [];
   }, [contract, nftMinter]);
 
   const getBadge = useCallback(async (tokenId: number): Promise<QuestBadge | null> => {
@@ -837,21 +869,29 @@ export function useUSDCToken() {
   const { mutateAsync: approve, isPending: isApproving } = useContractWrite(contract, "approve");
 
   // Helper functions
-  const getBalance = useCallback(async (address: string): Promise<bigint | null> => {
+  const getBalance = useCallback(async (address: string, retries = 3): Promise<bigint | null> => {
     if (!contract || !address || !usdcToken) return null;
     
-    try {
-      const { readContract } = await import('thirdweb');
-      const result = await readContract({
-        contract,
-        method: "balanceOf",
-        params: [address]
-      });
-      return result as bigint;
-    } catch (error) {
-      console.error("Error fetching USDC balance:", error);
-      return BigInt(0);
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { readContract } = await import('thirdweb');
+        const result = await readContract({
+          contract,
+          method: "balanceOf",
+          params: [address]
+        });
+        return result as bigint;
+      } catch (error) {
+        console.warn(`USDC.balanceOf attempt ${attempt}/${retries} failed:`, error);
+        if (attempt === retries) {
+          console.error("Final attempt failed for USDC balanceOf:", error);
+          return BigInt(0);
+        }
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
     }
+    return BigInt(0);
   }, [contract, usdcToken]);
 
   const getAllowance = useCallback(async (owner: string, spender: string): Promise<bigint | null> => {

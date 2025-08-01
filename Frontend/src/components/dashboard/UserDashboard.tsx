@@ -122,13 +122,13 @@ export default function UserDashboard() {
           userBadgesCount: userBadges?.length || 0
         });
 
-        // Fetch submissions in parallel (limit to prevent rate limiting)
+        // Fetch ALL submissions for accurate stats calculation
         let validSubmissions: QuestSubmission[] = [];
         if (submissionIds && submissionIds.length > 0) {
-          // Limit to last 10 submissions for performance
-          const recentIds = submissionIds.slice(-10);
+          console.log('📊 UserDashboard: Processing all submissions for stats:', submissionIds.length);
+          
           const submissionResults = await Promise.allSettled(
-            recentIds.map((id: any) => 
+            submissionIds.map((id: any) => 
               questManager.getSubmission(Number(id)).catch(error => {
                 console.warn(`Failed to fetch submission ${id}:`, error);
                 return null;
@@ -139,6 +139,12 @@ export default function UserDashboard() {
           validSubmissions = submissionResults
             .filter(result => result.status === 'fulfilled' && result.value !== null)
             .map(result => (result as PromiseFulfilledResult<QuestSubmission>).value);
+          
+          console.log('📊 UserDashboard: Successfully processed submissions:', {
+            totalIds: submissionIds.length,
+            validSubmissions: validSubmissions.length,
+            submissionStatuses: validSubmissions.map(s => ({ id: s.questId?.toString(), status: s.status }))
+          });
         }
         
         setRecentSubmissions(validSubmissions.slice(-5)); // Last 5 submissions
