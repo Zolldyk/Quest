@@ -11,9 +11,17 @@ const STAKING_POOL_ABI = [
   "function stake(uint256 amount) external",
   "function unstake(uint256 amount) external", 
   "function getPoolBalance() external view returns (uint256)",
-  "function getStakerInfo(address staker) external view returns (uint256, uint256, uint256, bool)",
-  "function getPoolStats() external view returns (uint256, uint256, uint256, uint256)",
+  "function getStakerInfo(address staker) external view returns (uint256 stakedAmount, uint256 stakeTimestamp, uint256 lastUpdateTime, bool isActive)",
+  "function getPoolStats() external view returns (uint256 totalPoolBalance, uint256 totalStakers, uint256 totalRewardsDistributed, uint256 minimumStakeAmount)",
   "function getStakingToken() external view returns (address)",
+  "function distributeReward(address recipient, uint256 amount) external",
+  "function replenishPool(uint256 amount) external",
+  "function setQuestManager(address questManager) external",
+  "function setMinimumStakeAmount(uint256 newMinimumAmount) external",
+  "function pause() external",
+  "function unpause() external",
+  "function getQuestManager() external view returns (address)",
+  "function getConfig() external view returns (address stakingToken, address questManager, uint256 minimumStakeAmount, uint256 emergencyWithdrawDelay, bool isPaused)",
 ] as const;
 
 const QUEST_MANAGER_ABI = [
@@ -195,12 +203,22 @@ const QUEST_MANAGER_ABI = [
 ] as const;
 
 const NFT_MINTER_ABI = [
-  "function getBadge(uint256 tokenId) external view returns (tuple(uint256,address,string,uint256,uint256,string,bool))",
+  "function mintQuestNFT(address recipient, uint256 questId, string calldata tweetUrl) external returns (uint256)",
+  "function getBadge(uint256 tokenId) external view returns (tuple(uint256 questId, address recipient, string tweetUrl, uint256 mintTime, uint256 questReward, string questTitle, bool isValid))",
   "function getUserBadges(address user) external view returns (uint256[])",
+  "function getQuestBadges(uint256 questId) external view returns (uint256[])",
   "function getUserBadgeCount(address user) external view returns (uint256)",
+  "function getQuestBadgeCount(uint256 questId) external view returns (uint256)",
   "function totalSupply() external view returns (uint256)",
   "function balanceOf(address owner) external view returns (uint256)",
   "function tokenURI(uint256 tokenId) external view returns (string)",
+  "function contractURI() external view returns (string)",
+  "function setQuestManager(address questManager) external",
+  "function setBaseURI(string calldata baseURI) external",
+  "function setContractURI(string calldata contractURI_) external",
+  "function invalidateBadge(uint256 tokenId) external",
+  "function isBadgeValid(uint256 tokenId) external view returns (bool)",
+  "function getCollectionStats() external view returns (uint256 totalMinted, uint256 nextTokenId, address questManager)",
 ] as const;
 
 const ERC20_ABI = [
