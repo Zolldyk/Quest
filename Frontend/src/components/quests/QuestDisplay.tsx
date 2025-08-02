@@ -63,77 +63,66 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
   useEffect(() => {
     const fetchQuestDetails = async () => {
       console.log('🔍 QuestDisplay: Starting fetchQuestDetails', {
-        activeQuests,
+        activeQuests,  
         activeQuestsType: typeof activeQuests,
         isArray: Array.isArray(activeQuests),
         defaultQuestId
       });
       
-      // Wait for activeQuests to be defined (not undefined)
-      if (activeQuests === undefined) {
-        console.log('⏳ QuestDisplay: activeQuests undefined, waiting...');
-        setIsLoading(true);
-        return;
-      }
-      
       setIsLoading(true);
       
       try {
-        // Try to get active quests, but provide fallback behavior
+        let validQuests: Quest[] = [];
         let questIds: any[] = [];
         
+        // Try to get active quests from contract
         try {
-          if (Array.isArray(activeQuests)) {
+          if (Array.isArray(activeQuests) && activeQuests.length > 0) {
             questIds = activeQuests;
             console.log('✅ QuestDisplay: Got active quests array:', questIds);
-          } else if (activeQuests && typeof activeQuests === 'object') {
-            // Handle case where activeQuests might be wrapped in an object
-            questIds = Object.values(activeQuests);
-            console.log('✅ QuestDisplay: Got active quests object values:', questIds);
+            
+            // Fetch quest details with individual error handling
+            const questPromises = questIds.map(async (questId: any) => {
+              try {
+                const quest = await getQuest(Number(questId));
+                return quest;
+              } catch (error) {
+                console.warn(`Failed to fetch quest ${questId}:`, error);
+                return null;
+              }
+            });
+
+            const questDetails = await Promise.all(questPromises);
+            validQuests = questDetails.filter(quest => quest !== null) as Quest[];
+            
+            console.log('✅ QuestDisplay: Fetched valid quests:', validQuests.length);
           } else {
-            console.warn('⚠️ QuestDisplay: activeQuests is not array or object:', activeQuests);
+            console.log('⚠️ QuestDisplay: No active quests from contract, activeQuests:', activeQuests);
           }
         } catch (error) {
           console.warn('❌ QuestDisplay: Error processing activeQuests:', error);
         }
 
-        // If no active quests from contract, show default quest
-        if (questIds.length === 0) {
-          console.log('⚠️ QuestDisplay: No active quests from contract, using fallback quest');
-          // Provide a default/mock quest for demonstration
-          const defaultQuest: Quest = {
-            questId: defaultQuestId || BigInt(1),
-            title: "Twitter Quest: Share about Quest dApp",
-            description: "Help spread the word about Quest dApp by sharing on Twitter",
-            requirements: "Post a tweet mentioning @QuestDApp with #EtherlinkQuest hashtag and include what you love about decentralized quest platforms",
+        // Always provide at least one quest for demo purposes
+        if (validQuests.length === 0) {
+          console.log('📝 QuestDisplay: Using fallback quest for demo');
+          const fallbackQuest: Quest = {
+            questId: BigInt(1), // Use hardcoded ID for demo
+            title: "Quest dApp Twitter Challenge",
+            description: "Help spread the word about Quest dApp and earn your first reward! Share your thoughts about decentralized quest platforms on Twitter.",
+            requirements: "1. Post a tweet mentioning @QuestDApp\n2. Include hashtag #EtherlinkQuest\n3. Share what you love about decentralized quest platforms\n4. Make sure your tweet is public",
             rewardAmount: BigInt(1000000), // 1 USDC (6 decimals)
             isActive: true,
             startTime: BigInt(Math.floor(Date.now() / 1000) - 86400), // Started yesterday
             endTime: BigInt(Math.floor(Date.now() / 1000) + 30 * 86400), // Ends in 30 days
             maxCompletions: BigInt(1000),
-            currentCompletions: BigInt(0),
+            currentCompletions: BigInt(15), // Show some progress for demo
             creator: "0x0000000000000000000000000000000000000000",
             createTime: BigInt(Math.floor(Date.now() / 1000) - 86400),
           };
           
-          setQuests([defaultQuest]);
-          setIsLoading(false);
-          return;
+          validQuests = [fallbackQuest];
         }
-
-        // Fetch quest details with individual error handling
-        const questPromises = questIds.map(async (questId: any) => {
-          try {
-            const quest = await getQuest(Number(questId));
-            return quest;
-          } catch (error) {
-            console.warn(`Failed to fetch quest ${questId}:`, error);
-            return null;
-          }
-        });
-
-        const questDetails = await Promise.all(questPromises);
-        const validQuests = questDetails.filter(quest => quest !== null) as Quest[];
         
         setQuests(validQuests);
         
@@ -270,7 +259,7 @@ export default function QuestDisplay({ className = "" }: QuestDisplayProps) {
         </div>
 
         {/* Quest Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {quests.map((quest) => (
             <QuestCard
               key={quest.questId.toString()}
@@ -391,67 +380,75 @@ function QuestCard({
 
   return (
     <div className={`
-      relative bg-white rounded-xl shadow-card border-2 p-6 transition-all duration-200
+      relative bg-white rounded-xl shadow-lg border-2 p-8 transition-all duration-200 hover:shadow-xl
       ${statusStyles[status]}
     `}>
       
       {/* Status Badge */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-6 right-6">
         {hasCompleted && (
-          <div className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full flex items-center">
-            <CheckCircleIcon className="h-3 w-3 mr-1" />
+          <div className="bg-green-100 text-green-800 text-xs font-medium px-3 py-1.5 rounded-full flex items-center shadow-sm">
+            <CheckCircleIcon className="h-3 w-3 mr-1.5" />
             Completed
           </div>
         )}
         {hasSubmitted && !hasCompleted && (
-          <div className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full flex items-center">
-            <ClockIcon className="h-3 w-3 mr-1" />
+          <div className="bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1.5 rounded-full flex items-center shadow-sm">
+            <ClockIcon className="h-3 w-3 mr-1.5" />
             Pending Review
           </div>
         )}
         {isExpired && !hasCompleted && !hasSubmitted && (
-          <div className="bg-gray-100 text-gray-800 text-xs font-medium px-2 py-1 rounded-full">
+          <div className="bg-gray-100 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
             Expired
           </div>
         )}
         {isFull && !hasCompleted && !hasSubmitted && !isExpired && (
-          <div className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
+          <div className="bg-orange-100 text-orange-800 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
             Full
           </div>
         )}
       </div>
 
       {/* Quest Header */}
-      <div className="mb-4 pr-20">
-        <div className="flex items-center mb-2">
-          <TrophyIcon className="h-5 w-5 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
+      <div className="mb-6 pr-24">
+        <div className="flex items-center mb-3">
+          <div className="flex-shrink-0">
+            <TrophyIcon className="h-6 w-6 text-blue-600" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 ml-3 leading-tight">
             {quest.title}
           </h3>
         </div>
-        <p className="text-gray-600 text-sm leading-relaxed">
+        <p className="text-gray-600 text-base leading-relaxed line-clamp-3">
           {quest.description}
         </p>
       </div>
 
       {/* Quest Details */}
-      <div className="space-y-3 mb-6">
-        <div className="flex items-center text-sm text-gray-700">
-          <CurrencyDollarIcon className="h-4 w-4 text-green-500 mr-2" />
-          <span className="font-medium">
+      <div className="space-y-4 mb-8">
+        <div className="flex items-center text-base text-gray-700">
+          <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+            <CurrencyDollarIcon className="h-4 w-4 text-green-600" />
+          </div>
+          <span className="font-semibold">
             {formatTokenAmount(quest.rewardAmount, 6)} USDC Reward
           </span>
         </div>
         
-        <div className="flex items-center text-sm text-gray-700">
-          <UsersIcon className="h-4 w-4 text-blue-500 mr-2" />
+        <div className="flex items-center text-base text-gray-700">
+          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+            <UsersIcon className="h-4 w-4 text-blue-600" />
+          </div>
           <span>
             {quest.currentCompletions.toString()}/{quest.maxCompletions.toString()} completed
           </span>
         </div>
         
-        <div className="flex items-center text-sm text-gray-700">
-          <ClockIcon className="h-4 w-4 text-purple-500 mr-2" />
+        <div className="flex items-center text-base text-gray-700">
+          <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+            <ClockIcon className="h-4 w-4 text-purple-600" />
+          </div>
           <span>
             {isExpired ? 'Expired' : `Ends ${new Date(Number(quest.endTime) * 1000).toLocaleDateString()}`}
           </span>
@@ -459,15 +456,15 @@ function QuestCard({
       </div>
 
       {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center text-xs text-gray-500 mb-1">
-          <span>Progress</span>
+      <div className="mb-8">
+        <div className="flex justify-between items-center text-sm font-medium text-gray-700 mb-3">
+          <span>Quest Progress</span>
           <span>{Math.round(progressPercentage)}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
           <div 
-            className={`h-2 rounded-full transition-all duration-500 ${
-              progressPercentage === 100 ? 'bg-green-500' : 'bg-blue-500'
+            className={`h-3 rounded-full transition-all duration-500 ${
+              progressPercentage === 100 ? 'bg-green-500' : 'bg-gradient-to-r from-blue-500 to-blue-600'
             }`}
             style={{ width: `${Math.min(progressPercentage, 100)}%` }}
           />
@@ -475,74 +472,81 @@ function QuestCard({
       </div>
 
       {/* Requirements */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-900 mb-2">Requirements:</h4>
-        <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
-          {quest.requirements}
+      <div className="mb-8">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">Quest Requirements</h4>
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200">
+          <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+            {quest.requirements}
+          </div>
         </div>
         
         {/* Quick hashtag reference for social media quests */}
         {quest.requirements.includes('#EtherlinkQuest') && (
-          <div className="mt-2 flex items-center text-xs text-blue-600">
-            <HashtagIcon className="h-3 w-3 mr-1" />
-            <span className="font-mono bg-blue-50 px-1 py-0.5 rounded">
-              #EtherlinkQuest
-            </span>
+          <div className="mt-4 flex items-center justify-center">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center">
+              <HashtagIcon className="h-4 w-4 text-blue-600 mr-2" />
+              <span className="font-mono text-blue-800 font-medium">
+                #EtherlinkQuest
+              </span>
+            </div>
           </div>
         )}
       </div>
 
       {/* Action Button */}
-      <div className="space-y-2">
+      <div className="space-y-4">
         {!userAddress ? (
-          <div className="text-center py-2">
-            <p className="text-sm text-gray-500">Connect wallet to participate</p>
+          <div className="text-center py-4 bg-gray-50 rounded-xl border border-gray-200">
+            <p className="text-gray-600 font-medium">Connect wallet to participate</p>
+            <p className="text-sm text-gray-500 mt-1">Get started with Web3 quests</p>
           </div>
         ) : hasCompleted ? (
           <button 
-            className="w-full bg-green-100 text-green-800 font-medium py-3 px-4 rounded-lg cursor-default"
+            className="w-full bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-4 px-6 rounded-xl cursor-default transition-colors border border-green-200"
             disabled
           >
-            <CheckCircleIcon className="h-4 w-4 inline mr-2" />
-            Quest Completed
+            <CheckCircleIcon className="h-5 w-5 inline mr-3" />
+            Quest Completed Successfully
           </button>
         ) : hasSubmitted ? (
           <button 
-            className="w-full bg-yellow-100 text-yellow-800 font-medium py-3 px-4 rounded-lg cursor-default"
+            className="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold py-4 px-6 rounded-xl cursor-default transition-colors border border-yellow-200"
             disabled
           >
-            <ClockIcon className="h-4 w-4 inline mr-2" />
+            <ClockIcon className="h-5 w-5 inline mr-3" />
             Submitted - Awaiting Review
           </button>
         ) : isExpired ? (
           <button 
-            className="w-full bg-gray-100 text-gray-500 font-medium py-3 px-4 rounded-lg cursor-default"
+            className="w-full bg-gray-100 text-gray-500 font-semibold py-4 px-6 rounded-xl cursor-default border border-gray-200"
             disabled
           >
             Quest Expired
           </button>
         ) : isFull ? (
           <button 
-            className="w-full bg-orange-100 text-orange-800 font-medium py-3 px-4 rounded-lg cursor-default"
+            className="w-full bg-orange-100 hover:bg-orange-200 text-orange-800 font-semibold py-4 px-6 rounded-xl cursor-default transition-colors border border-orange-200"
             disabled
           >
-            <ExclamationTriangleIcon className="h-4 w-4 inline mr-2" />
+            <ExclamationTriangleIcon className="h-5 w-5 inline mr-3" />
             Maximum Completions Reached
           </button>
         ) : (
           <button
             onClick={onSubmit}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
-            <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-2" />
+            <ArrowTopRightOnSquareIcon className="h-5 w-5 mr-3" />
             Start Quest
           </button>
         )}
         
         {/* Additional info for quest requirements */}
-        {canSubmit && quest.requirements.includes('twitter.com') && (
-          <div className="text-xs text-gray-500 text-center">
-            Complete the task on social media, then submit proof here
+        {canSubmit && (
+          <div className="text-center">
+            <p className="text-sm text-gray-600 bg-blue-50 rounded-lg py-2 px-4 border border-blue-100">
+              💡 Complete the social media task, then return here to submit proof
+            </p>
           </div>
         )}
       </div>
