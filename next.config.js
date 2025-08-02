@@ -5,6 +5,9 @@ const nextConfig = {
     // Enable experimental features for better performance
     experimental: {
       scrollRestoration: true,
+      optimizeCss: true,
+      workerThreads: false,
+      esmExternals: true,
     },
   
     // Image optimization configuration
@@ -28,7 +31,7 @@ const nextConfig = {
       NEXT_PUBLIC_USDC_TOKEN_ADDRESS: process.env.NEXT_PUBLIC_USDC_TOKEN_ADDRESS,
     },
   
-    // Webpack configuration for Web3 compatibility (simplified for v5)
+    // Webpack configuration for Web3 compatibility and performance
     webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
       // Handle node modules that need polyfills
       config.resolve.fallback = {
@@ -43,6 +46,64 @@ const nextConfig = {
         ...config.experiments,
         topLevelAwait: true,
       };
+
+      // Optimize bundle splitting for better loading performance
+      if (!isServer) {
+        config.optimization = {
+          ...config.optimization,
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              default: false,
+              vendors: false,
+              // Vendor chunk for framework code
+              framework: {
+                chunks: 'all',
+                name: 'framework',
+                test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
+                priority: 40,
+                enforce: true,
+              },
+              // Separate chunk for thirdweb and web3 libraries
+              web3: {
+                chunks: 'all',
+                name: 'web3',
+                test: /[\\/]node_modules[\\/](thirdweb|viem|ethers|wagmi|@wagmi)[\\/]/,
+                priority: 30,
+                enforce: true,
+              },
+              // Common chunk for shared components
+              commons: {
+                name: 'commons',
+                chunks: 'all',
+                minChunks: 2,
+                priority: 20,
+                reuseExistingChunk: true,
+              },
+              // Default vendor chunk for other libraries
+              lib: {
+                test: /[\\/]node_modules[\\/]/,
+                name: 'lib',
+                chunks: 'all',
+                priority: 10,
+                reuseExistingChunk: true,
+              },
+            },
+          },
+        };
+
+        // Add bundle analyzer in development
+        if (dev && process.env.ANALYZE) {
+          const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+          config.plugins.push(
+            new BundleAnalyzerPlugin({
+              analyzerMode: 'server',
+              analyzerPort: 8888,
+              openAnalyzer: true,
+            })
+          );
+        }
+      }
   
       return config;
     },
@@ -57,14 +118,16 @@ const nextConfig = {
             { key: 'Access-Control-Allow-Origin', value: '*' },
             { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
             { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+            { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate, max-age=0' },
           ],
         },
         {
-          source: '/(dashboard|quests|staking)',
+          source: '/(dashboard|quests|staking)(.*)',
           headers: [
-            { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+            { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate, max-age=0' },
             { key: 'Pragma', value: 'no-cache' },
             { key: 'Expires', value: '0' },
+            { key: 'X-Robots-Tag', value: 'noindex, nofollow, nosnippet, noarchive' },
           ],
         },
         {
