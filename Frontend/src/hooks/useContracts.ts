@@ -93,6 +93,34 @@ const STAKING_POOL_ABI = [
       {"name": "isPaused", "type": "bool"}
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "pause",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "unpause",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "paused",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "bool"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [{"name": "", "type": "address"}],
+    "stateMutability": "view"
   }
 ] as const;
 
@@ -487,6 +515,14 @@ export function useStakingPool() {
   const { mutateAsync: stake, isPending: isStaking } = useContractWrite(contract, "stake");
   const { mutateAsync: unstake, isPending: isUnstaking } = useContractWrite(contract, "unstake");
   
+  // Admin functions
+  const { mutateAsync: pauseContract, isPending: isPausing } = useContractWrite(contract, "pause");
+  const { mutateAsync: unpauseContract, isPending: isUnpausing } = useContractWrite(contract, "unpause");
+  
+  // Read pause state and owner
+  const { data: isPaused, refetch: refetchPauseState } = useContractRead(contract, "paused");
+  const { data: contractOwner } = useContractRead(contract, "owner");
+  
   // Helper functions with retry logic
   const getStakerInfo = useCallback(async (address: string, retries = 3): Promise<StakerInfo | null> => {
     if (!contract || !address || !stakingPool) return null;
@@ -572,17 +608,60 @@ export function useStakingPool() {
     }
   }, [contract, unstake, refetchPoolBalance, refetchPoolStats, stakingPool]);
 
+  const pauseStakingPool = useCallback(async () => {
+    if (!contract || !stakingPool) throw new Error("Contract not available or not configured");
+    
+    try {
+      const tx = await pauseContract([]);
+      toast.success("StakingPool paused successfully!");
+      
+      // Refetch pause state
+      await refetchPauseState();
+      
+      return tx;
+    } catch (error: any) {
+      console.error("Pause error:", error);
+      toast.error(error?.message || "Failed to pause contract");
+      throw error;
+    }
+  }, [contract, pauseContract, refetchPauseState, stakingPool]);
+
+  const unpauseStakingPool = useCallback(async () => {
+    if (!contract || !stakingPool) throw new Error("Contract not available or not configured");
+    
+    try {
+      const tx = await unpauseContract([]);
+      toast.success("StakingPool unpaused successfully!");
+      
+      // Refetch pause state
+      await refetchPauseState();
+      
+      return tx;
+    } catch (error: any) {
+      console.error("Unpause error:", error);
+      toast.error(error?.message || "Failed to unpause contract");
+      throw error;
+    }
+  }, [contract, unpauseContract, refetchPauseState, stakingPool]);
+
   return {
     contract,
     poolBalance,
     poolStats,
     isStaking,
     isUnstaking,
+    isPausing,
+    isUnpausing,
+    isPaused,
+    contractOwner,
     getStakerInfo,
     stakeTokens,
     unstakeTokens,
+    pauseStakingPool,
+    unpauseStakingPool,
     refetchPoolBalance,
     refetchPoolStats,
+    refetchPauseState,
   };
 }
 

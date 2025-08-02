@@ -63,7 +63,7 @@ export default function StakingInterface() {
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // ============ Constants ============
-  const STAKING_POOL_ADDRESS = process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS!;
+  const STAKING_POOL_ADDRESS = process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS!.trim();
   const USDC_DECIMALS = 6; // USDC has 6 decimals
 
   // ============ Effects ============

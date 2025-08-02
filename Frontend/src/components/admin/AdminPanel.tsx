@@ -61,7 +61,13 @@ export default function AdminPanel() {
   
   const { 
     poolBalance,
-    poolStats 
+    poolStats,
+    isPaused,
+    contractOwner,
+    isPausing,
+    isUnpausing,
+    pauseStakingPool,
+    unpauseStakingPool 
   } = useStakingPool();
 
   // ============ State ============
@@ -275,7 +281,7 @@ export default function AdminPanel() {
             {/* Quick Actions */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <QuickActionCard
                   title="Review Submissions"
                   description={`${stats?.pendingSubmissions || 0} submissions waiting`}
@@ -297,6 +303,25 @@ export default function AdminPanel() {
                   onClick={() => setActiveTab('overview')}
                   icon={<EyeIcon className="h-5 w-5" />}
                   color="blue"
+                />
+                <QuickActionCard
+                  title={isPaused ? "Unpause Contract" : "Pause Contract"}
+                  description={isPaused ? "StakingPool is currently paused" : "StakingPool is currently active"}
+                  onClick={async () => {
+                    try {
+                      if (isPaused) {
+                        await unpauseStakingPool();
+                      } else {
+                        await pauseStakingPool();
+                      }
+                    } catch (error) {
+                      console.error("Pause/unpause error:", error);
+                    }
+                  }}
+                  icon={isPaused ? <CheckCircleIcon className="h-5 w-5" /> : <ExclamationTriangleIcon className="h-5 w-5" />}
+                  color={isPaused ? "green" : "orange"}
+                  isLoading={isPausing || isUnpausing}
+                  disabled={!address || contractOwner !== address}
                 />
               </div>
             </div>
@@ -404,8 +429,10 @@ interface QuickActionCardProps {
   description: string;
   onClick: () => void;
   icon: React.ReactNode;
-  color: 'blue' | 'green' | 'yellow';
+  color: 'blue' | 'green' | 'yellow' | 'orange' | 'red';
   urgent?: boolean;
+  isLoading?: boolean;
+  disabled?: boolean;
 }
 
 function QuickActionCard({ 
@@ -414,25 +441,35 @@ function QuickActionCard({
   onClick, 
   icon, 
   color,
-  urgent = false 
+  urgent = false,
+  isLoading = false,
+  disabled = false
 }: QuickActionCardProps) {
   const colorClasses = {
     blue: 'border-blue-200 hover:border-blue-300 text-blue-600 hover:bg-blue-50',
     green: 'border-green-200 hover:border-green-300 text-green-600 hover:bg-green-50',
     yellow: 'border-yellow-200 hover:border-yellow-300 text-yellow-600 hover:bg-yellow-50',
+    orange: 'border-orange-200 hover:border-orange-300 text-orange-600 hover:bg-orange-50',
+    red: 'border-red-200 hover:border-red-300 text-red-600 hover:bg-red-50',
   };
 
   return (
     <button
       onClick={onClick}
+      disabled={disabled || isLoading}
       className={`
         p-4 border-2 rounded-lg transition-all duration-200 text-left
         ${colorClasses[color]} 
         ${urgent ? 'ring-2 ring-red-200 animate-pulse' : ''}
+        ${disabled || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
       `}
     >
       <div className="flex items-center mb-2">
-        {icon}
+        {isLoading ? (
+          <LoadingSpinner size="sm" />
+        ) : (
+          icon
+        )}
         <h4 className="ml-2 font-medium text-gray-900">{title}</h4>
         {urgent && (
           <span className="ml-auto w-2 h-2 bg-red-500 rounded-full"></span>
