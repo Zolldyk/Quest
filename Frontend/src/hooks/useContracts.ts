@@ -1115,6 +1115,12 @@ export function useUSDCToken() {
   const getAllowance = useCallback(async (owner: string, spender: string): Promise<bigint | null> => {
     if (!contract || !owner || !spender || !usdcToken) return null;
     
+    // Validate addresses are properly formatted
+    if (!owner.startsWith('0x') || owner.length !== 42 || !spender.startsWith('0x') || spender.length !== 42) {
+      console.error("Invalid address format:", { owner, spender });
+      return BigInt(0);
+    }
+    
     try {
       const { readContract } = await import('thirdweb');
       const result = await readContract({

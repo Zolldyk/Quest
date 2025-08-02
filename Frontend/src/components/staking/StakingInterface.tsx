@@ -102,21 +102,32 @@ export default function StakingInterface() {
         
         // Get allowance with error handling
         try {
+          console.log('Fetching allowance for:', { address, stakingPool: STAKING_POOL_ADDRESS });
           const allowance = await getAllowance(address, STAKING_POOL_ADDRESS);
           if (allowance) currentAllowance = allowance;
+          console.log('Allowance fetched successfully:', allowance?.toString());
         } catch (error) {
           console.warn('Failed to fetch allowance:', error);
         }
         
-        // Format stats
+        // Format stats with better error handling
+        console.log('Pool stats received:', { 
+          poolBalance: poolBalance?.toString(), 
+          poolStats, 
+          poolStatsType: typeof poolStats,
+          poolStatsLength: Array.isArray(poolStats) ? poolStats.length : 'not array'
+        });
+        
         const newStats: StakingStats = {
           totalPoolBalance: formatTokenAmount(poolBalance || BigInt(0), USDC_DECIMALS),
-          totalStakers: Number(poolStats?.[1]) || 0,
-          totalRewards: formatTokenAmount(poolStats?.[2] || BigInt(0), USDC_DECIMALS),
-          minimumStake: formatTokenAmount(poolStats?.[3] || BigInt(0), USDC_DECIMALS),
+          totalStakers: (poolStats && Array.isArray(poolStats) && poolStats.length >= 2) ? Number(poolStats[1]) : 0,
+          totalRewards: formatTokenAmount((poolStats && Array.isArray(poolStats) && poolStats.length >= 3) ? (poolStats[2] as bigint) : BigInt(0), USDC_DECIMALS),
+          minimumStake: formatTokenAmount((poolStats && Array.isArray(poolStats) && poolStats.length >= 4) ? (poolStats[3] as bigint) : BigInt(1000000), USDC_DECIMALS), // Default to 1 USDC minimum
           userStaked: formatTokenAmount(stakerInfo?.stakedAmount || BigInt(0), USDC_DECIMALS),
           userBalance: formatTokenAmount(usdcBalance, USDC_DECIMALS),
         };
+        
+        console.log('Formatted stats:', newStats);
 
         setStats(newStats);
         setAllowance(currentAllowance);
@@ -270,6 +281,11 @@ export default function StakingInterface() {
               <div className="flex items-center mb-6">
                 <CurrencyDollarIcon className="h-6 w-6 text-primary-600 mr-3" />
                 <h2 className="text-xl font-semibold text-gray-900">Pool Statistics</h2>
+                {isLoadingData && (
+                  <div className="ml-auto">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                )}
               </div>
               
               <div className="space-y-4">
@@ -277,21 +293,25 @@ export default function StakingInterface() {
                   label="Total Pool Balance"
                   value={`${stats?.totalPoolBalance || '0'} USDC`}
                   icon={<div className="w-2 h-2 bg-green-400 rounded-full" />}
+                  isLoading={isLoadingData}
                 />
                 <StatItem
                   label="Total Stakers"
                   value={stats?.totalStakers.toString() || '0'}
                   icon={<div className="w-2 h-2 bg-blue-400 rounded-full" />}
+                  isLoading={isLoadingData}
                 />
                 <StatItem
                   label="Rewards Distributed"
                   value={`${stats?.totalRewards || '0'} USDC`}
                   icon={<div className="w-2 h-2 bg-purple-400 rounded-full" />}
+                  isLoading={isLoadingData}
                 />
                 <StatItem
                   label="Minimum Stake"
                   value={`${stats?.minimumStake || '0'} USDC`}
                   icon={<InformationCircleIcon className="h-4 w-4 text-gray-400" />}
+                  isLoading={isLoadingData}
                 />
               </div>
 
@@ -304,10 +324,12 @@ export default function StakingInterface() {
                       label="Your Stake"
                       value={`${stats.userStaked} USDC`}
                       highlight={parseFloat(stats.userStaked) > 0}
+                      isLoading={isLoadingData}
                     />
                     <StatItem
                       label="Available Balance"
                       value={`${stats.userBalance} USDC`}
+                      isLoading={isLoadingData}
                     />
                   </div>
                 </div>
@@ -579,18 +601,23 @@ interface StatItemProps {
   value: string;
   icon?: React.ReactNode;
   highlight?: boolean;
+  isLoading?: boolean;
 }
 
-function StatItem({ label, value, icon, highlight = false }: StatItemProps) {
+function StatItem({ label, value, icon, highlight = false, isLoading = false }: StatItemProps) {
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center">
         {icon && <span className="mr-2">{icon}</span>}
         <span className="text-sm text-gray-600">{label}</span>
       </div>
-      <span className={`font-semibold ${highlight ? 'text-primary-600' : 'text-gray-900'}`}>
-        {value}
-      </span>
+      {isLoading ? (
+        <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+      ) : (
+        <span className={`font-semibold ${highlight ? 'text-primary-600' : 'text-gray-900'}`}>
+          {value}
+        </span>
+      )}
     </div>
   );
 }
