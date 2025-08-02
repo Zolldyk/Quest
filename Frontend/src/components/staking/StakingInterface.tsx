@@ -153,7 +153,7 @@ export default function StakingInterface() {
 
   // Check if approval is needed when stake amount changes
   useEffect(() => {
-    if (stakeAmount && allowance) {
+    if (stakeAmount) {
       const stakeAmountBN = parseTokenAmount(stakeAmount, USDC_DECIMALS);
       setNeedsApproval(allowance < stakeAmountBN);
     } else {

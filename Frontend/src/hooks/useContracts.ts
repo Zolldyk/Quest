@@ -121,6 +121,47 @@ const STAKING_POOL_ABI = [
     "inputs": [],
     "outputs": [{"name": "", "type": "address"}],
     "stateMutability": "view"
+  },
+  {
+    "type": "error",
+    "name": "StakingPool__InvalidAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "StakingPool__InvalidAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "StakingPool__InsufficientBalance",
+    "inputs": [
+      {"name": "available", "type": "uint256"},
+      {"name": "requested", "type": "uint256"}
+    ]
+  },
+  {
+    "type": "error",
+    "name": "StakingPool__InsufficientPoolBalance",
+    "inputs": [
+      {"name": "poolBalance", "type": "uint256"},
+      {"name": "required", "type": "uint256"}
+    ]
+  },
+  {
+    "type": "error",
+    "name": "StakingPool__TransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "StakingPool__Unauthorized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "StakingPool__ZeroAmount",
+    "inputs": []
   }
 ] as const;
 
