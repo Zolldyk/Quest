@@ -523,14 +523,25 @@ export function useQuestManager() {
         
         // Check for wrapped result structures
         if (result && typeof result === 'object' && !Array.isArray(result)) {
-          // Check for {result: data} structure
-          if ('result' in result && result.result) {
+          // Try direct property access first (more reliable than 'in' operator)
+          if (result.result !== undefined) {
             actualResult = result.result;
+            console.log(`📊 getSubmission(${submissionId}) using wrapped result:`, typeof actualResult);
           }
-          // Check for direct object access to array properties
-          else if (Object.keys(result).length === 9 && result[0] !== undefined) {
+          // Check for direct object access to array properties  
+          else if (Object.keys(result).length >= 9 && result[0] !== undefined) {
             // Convert object with numeric keys to array
             actualResult = Object.values(result);
+            console.log(`📊 getSubmission(${submissionId}) converted object to array:`, actualResult.length);
+          }
+          // If it's an object that might be the direct tuple
+          else if (Object.keys(result).length >= 9) {
+            // Try converting the object values directly
+            const values = Object.values(result);
+            if (values.length >= 9) {
+              actualResult = values;
+              console.log(`📊 getSubmission(${submissionId}) using object values as array:`, values.length);
+            }
           }
         }
         
