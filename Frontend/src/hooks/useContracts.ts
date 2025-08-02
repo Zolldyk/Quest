@@ -4,8 +4,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 
 // ============ Contract ABIs ============
-// Import your contract ABIs here or define them inline
-// For now, we'll define the essential function signatures
+// Contract ABIs in JSON format for ThirdWeb v5 compatibility
 
 const STAKING_POOL_ABI = [
   {
