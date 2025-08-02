@@ -513,11 +513,33 @@ export function useQuestManager() {
           length: Array.isArray(result) ? result.length : 'not array',
           type: typeof result,
           hasResultProperty: result && typeof result === 'object' && 'result' in result,
+          objectKeys: result && typeof result === 'object' ? Object.keys(result) : 'not object',
+          directAccess: result?.result,
           actualData: result && typeof result === 'object' && 'result' in result ? result.result : result
         });
         
-        // Handle case where thirdweb wraps result in {result: data}
-        const actualResult = result && typeof result === 'object' && 'result' in result ? result.result : result;
+        // Handle different thirdweb result structures
+        let actualResult = result;
+        
+        // Check for wrapped result structures
+        if (result && typeof result === 'object' && !Array.isArray(result)) {
+          // Check for {result: data} structure
+          if ('result' in result && result.result) {
+            actualResult = result.result;
+          }
+          // Check for direct object access to array properties
+          else if (Object.keys(result).length === 9 && result[0] !== undefined) {
+            // Convert object with numeric keys to array
+            actualResult = Object.values(result);
+          }
+        }
+        
+        console.log(`📊 getSubmission(${submissionId}) processed result:`, {
+          originalType: typeof result,
+          processedType: typeof actualResult,
+          isProcessedArray: Array.isArray(actualResult),
+          processedLength: Array.isArray(actualResult) ? actualResult.length : 'not array'
+        });
         
         if (actualResult && Array.isArray(actualResult) && actualResult.length >= 9) {
           const parsed = {
