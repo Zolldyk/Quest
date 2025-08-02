@@ -151,8 +151,23 @@ export default function UserDashboard() {
 
         // Calculate stats
         const completedCount = validSubmissions.filter(s => s.status === 1).length;
-        const totalEarnedAmount = completedCount * 1; // 1 USDC per quest (simplified)
         const pendingCount = validSubmissions.filter(s => s.status === 0).length;
+        
+        // Calculate total earned by getting quest reward amounts
+        let totalEarnedAmount = 0;
+        try {
+          const completedSubmissions = validSubmissions.filter(s => s.status === 1);
+          for (const submission of completedSubmissions) {
+            const quest = await questManager.getQuest(Number(submission.questId));
+            if (quest?.rewardAmount) {
+              totalEarnedAmount += Number(formatTokenAmount(quest.rewardAmount, 6, 6));
+            }
+          }
+        } catch (error) {
+          console.warn('Error calculating total earned amount:', error);
+          // Fallback to simplified calculation
+          totalEarnedAmount = completedCount * 1;
+        }
 
         console.log('📊 UserDashboard: Calculated stats', {
           validSubmissions: validSubmissions.length,

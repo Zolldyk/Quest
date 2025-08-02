@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[64769],{64769:(e,t,a)=>{a.r(t),a.d(t,{eth_estimateGas:()=>u});var s=a(23471);async function u(e,t){let a=await e({method:"eth_estimateGas",params:[t]});return(0,s.uU)(a)}}}]);

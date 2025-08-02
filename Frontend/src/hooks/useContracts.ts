@@ -323,12 +323,15 @@ export function useStakingPool() {
           params: [address]
         });
         
-        if (result && Array.isArray(result) && result.length >= 4) {
+        // Handle case where thirdweb wraps result in {result: data}
+        const actualResult = result && typeof result === 'object' && 'result' in result ? result.result : result;
+        
+        if (actualResult && Array.isArray(actualResult) && actualResult.length >= 4) {
           return {
-            stakedAmount: result[0] as bigint,
-            stakeTimestamp: result[1] as bigint,
-            lastUpdateTime: result[2] as bigint,
-            isActive: result[3] as boolean,
+            stakedAmount: actualResult[0] as bigint,
+            stakeTimestamp: actualResult[1] as bigint,
+            lastUpdateTime: actualResult[2] as bigint,
+            isActive: actualResult[3] as boolean,
           };
         }
         
@@ -465,20 +468,23 @@ export function useQuestManager() {
         params: [questId]
       });
       
-      if (result && Array.isArray(result) && result.length >= 12) {
+      // Handle case where thirdweb wraps result in {result: data}
+      const actualResult = result && typeof result === 'object' && 'result' in result ? result.result : result;
+      
+      if (actualResult && Array.isArray(actualResult) && actualResult.length >= 12) {
         return {
-          questId: result[0] as bigint,
-          title: result[1] as string,
-          description: result[2] as string,
-          requirements: result[3] as string,
-          rewardAmount: result[4] as bigint,
-          isActive: result[5] as boolean,
-          startTime: result[6] as bigint,
-          endTime: result[7] as bigint,
-          maxCompletions: result[8] as bigint,
-          currentCompletions: result[9] as bigint,
-          creator: result[10] as string,
-          createTime: result[11] as bigint,
+          questId: actualResult[0] as bigint,
+          title: actualResult[1] as string,
+          description: actualResult[2] as string,
+          requirements: actualResult[3] as string,
+          rewardAmount: actualResult[4] as bigint,
+          isActive: actualResult[5] as boolean,
+          startTime: actualResult[6] as bigint,
+          endTime: actualResult[7] as bigint,
+          maxCompletions: actualResult[8] as bigint,
+          currentCompletions: actualResult[9] as bigint,
+          creator: actualResult[10] as string,
+          createTime: actualResult[11] as bigint,
         };
       }
       
@@ -505,20 +511,25 @@ export function useQuestManager() {
           result,
           isArray: Array.isArray(result),
           length: Array.isArray(result) ? result.length : 'not array',
-          type: typeof result
+          type: typeof result,
+          hasResultProperty: result && typeof result === 'object' && 'result' in result,
+          actualData: result && typeof result === 'object' && 'result' in result ? result.result : result
         });
         
-        if (result && Array.isArray(result) && result.length >= 9) {
+        // Handle case where thirdweb wraps result in {result: data}
+        const actualResult = result && typeof result === 'object' && 'result' in result ? result.result : result;
+        
+        if (actualResult && Array.isArray(actualResult) && actualResult.length >= 9) {
           const parsed = {
-            questId: result[0] as bigint,
-            player: result[1] as string,
-            tweetUrl: result[2] as string,
-            submitTime: result[3] as bigint,
-            status: result[4] as number,
-            verifyTime: result[5] as bigint,
-            verifiedBy: result[6] as string,
-            nftTokenId: result[7] as bigint,
-            rejectionReason: result[8] as string,
+            questId: actualResult[0] as bigint,
+            player: actualResult[1] as string,
+            tweetUrl: actualResult[2] as string,
+            submitTime: actualResult[3] as bigint,
+            status: actualResult[4] as number,
+            verifyTime: actualResult[5] as bigint,
+            verifiedBy: actualResult[6] as string,
+            nftTokenId: actualResult[7] as bigint,
+            rejectionReason: actualResult[8] as string,
           };
           console.log(`📊 getSubmission(${submissionId}) parsed:`, parsed);
           return parsed;
@@ -781,15 +792,18 @@ export function useNFTMinter() {
         params: [tokenId]
       });
       
-      if (result && Array.isArray(result) && result.length >= 7) {
+      // Handle case where thirdweb wraps result in {result: data}
+      const actualResult = result && typeof result === 'object' && 'result' in result ? result.result : result;
+      
+      if (actualResult && Array.isArray(actualResult) && actualResult.length >= 7) {
         return {
-          questId: result[0] as bigint,
-          recipient: result[1] as string,
-          tweetUrl: result[2] as string,
-          mintTime: result[3] as bigint,
-          questReward: result[4] as bigint,
-          questTitle: result[5] as string,
-          isValid: result[6] as boolean,
+          questId: actualResult[0] as bigint,
+          recipient: actualResult[1] as string,
+          tweetUrl: actualResult[2] as string,
+          mintTime: actualResult[3] as bigint,
+          questReward: actualResult[4] as bigint,
+          questTitle: actualResult[5] as string,
+          isValid: actualResult[6] as boolean,
         };
       }
       

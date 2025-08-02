@@ -17,3 +17,4 @@ GoldskySubgraph/README.md
 node_modules
 .vercel
 .env.production
+logs.md

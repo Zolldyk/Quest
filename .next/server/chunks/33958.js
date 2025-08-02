@@ -1,1 +1,0 @@
-"use strict";exports.id=33958,exports.ids=[33958],exports.modules={33958:(a,b,c)=>{c.r(b),c.d(b,{default:()=>d});let d={connecting:"Conectando a Smart Account",failedToConnect:"Error al conectar con Smart Account",wrongNetworkScreen:{failedToSwitch:"Error al cambiar de red",subtitle:"Tu cartera no est\xe1 conectada a la red requerida",title:"Red incorrecta"}}}};

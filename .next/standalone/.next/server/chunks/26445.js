@@ -1,1 +1,0 @@
-"use strict";exports.id=26445,exports.ids=[26445],exports.modules={26445:(a,b,c)=>{c.r(b),c.d(b,{default:()=>d});let d={connecting:"Connecting to Smart Account",failedToConnect:"Failed to connect to Smart Account",wrongNetworkScreen:{failedToSwitch:"Failed to switch network",subtitle:"Your wallet is not connected to the required network",title:"Wrong Network"}}}};
