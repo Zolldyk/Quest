@@ -165,7 +165,7 @@ const nextConfig = {
     // ESLint configuration
     eslint: {
       // Only run ESLint on these directories during builds
-      dirs: ['Frontend/app', 'Frontend/src'],
+      dirs: ['app', 'Frontend/src'],
     },
   
     // Compiler options for better performance
