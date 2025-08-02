@@ -4,98 +4,34 @@ import { useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 
 // ============ Contract ABIs ============
-// Contract ABIs in JSON format for ThirdWeb v5 compatibility
-
 const STAKING_POOL_ABI = [
-  {
-    "type": "function",
-    "name": "stake",
-    "inputs": [{"name": "amount", "type": "uint256"}],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "unstake",
-    "inputs": [{"name": "amount", "type": "uint256"}],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "getPoolBalance",
-    "inputs": [],
-    "outputs": [{"name": "", "type": "uint256"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getStakerInfo",
-    "inputs": [{"name": "staker", "type": "address"}],
-    "outputs": [
-      {"name": "stakedAmount", "type": "uint256"},
-      {"name": "stakeTimestamp", "type": "uint256"},
-      {"name": "lastUpdateTime", "type": "uint256"},
-      {"name": "isActive", "type": "bool"}
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getPoolStats",
-    "inputs": [],
-    "outputs": [
-      {"name": "totalPoolBalance", "type": "uint256"},
-      {"name": "totalStakers", "type": "uint256"},
-      {"name": "totalRewardsDistributed", "type": "uint256"},
-      {"name": "minimumStakeAmount", "type": "uint256"}
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getStakingToken",
-    "inputs": [],
-    "outputs": [{"name": "", "type": "address"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "distributeReward",
-    "inputs": [
-      {"name": "recipient", "type": "address"},
-      {"name": "amount", "type": "uint256"}
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "replenishPool",
-    "inputs": [{"name": "amount", "type": "uint256"}],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "getQuestManager",
-    "inputs": [],
-    "outputs": [{"name": "", "type": "address"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getConfig",
-    "inputs": [],
-    "outputs": [
-      {"name": "stakingToken", "type": "address"},
-      {"name": "questManager", "type": "address"},
-      {"name": "minimumStakeAmount", "type": "uint256"},
-      {"name": "emergencyWithdrawDelay", "type": "uint256"},
-      {"name": "isPaused", "type": "bool"}
-    ],
-    "stateMutability": "view"
-  }
+  "function stake(uint256 amount) external",
+  "function unstake(uint256 amount) external", 
+  "function getPoolBalance() external view returns (uint256)",
+  "function getStakerInfo(address staker) external view returns (uint256 stakedAmount, uint256 stakeTimestamp, uint256 lastUpdateTime, bool isActive)",
+  "function getPoolStats() external view returns (uint256 totalPoolBalance, uint256 totalStakers, uint256 totalRewardsDistributed, uint256 minimumStakeAmount)",
+  "function getStakingToken() external view returns (address)",
+  "function distributeReward(address recipient, uint256 amount) external",
+  "function replenishPool(uint256 amount) external",
+  "function getQuestManager() external view returns (address)",
+  "function getConfig() external view returns (address stakingToken, address questManager, uint256 minimumStakeAmount, uint256 emergencyWithdrawDelay, bool isPaused)",
+] as const;
+
+const NFT_MINTER_ABI = [
+  "function totalSupply() external view returns (uint256)",
+  "function balanceOf(address owner) external view returns (uint256)",
+  "function tokenURI(uint256 tokenId) external view returns (string)",
+  "function getUserBadges(address user) external view returns (uint256[])",
+  "function getBadge(uint256 tokenId) external view returns (tuple(uint256 questId, address recipient, string tweetUrl, uint256 mintTime, uint256 questReward, string questTitle, bool isValid))",
+  "function getUserBadgeCount(address user) external view returns (uint256)",
+] as const;
+
+const ERC20_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)",
+  "function balanceOf(address account) external view returns (uint256)",
+  "function decimals() external view returns (uint8)",
+  "function symbol() external view returns (string)",
 ] as const;
 
 const QUEST_MANAGER_ABI = [
@@ -276,106 +212,6 @@ const QUEST_MANAGER_ABI = [
   }
 ] as const;
 
-const NFT_MINTER_ABI = [
-  {
-    "type": "function",
-    "name": "totalSupply",
-    "inputs": [],
-    "outputs": [{"name": "", "type": "uint256"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "balanceOf",
-    "inputs": [{"name": "owner", "type": "address"}],
-    "outputs": [{"name": "", "type": "uint256"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "tokenURI",
-    "inputs": [{"name": "tokenId", "type": "uint256"}],
-    "outputs": [{"name": "", "type": "string"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getUserBadges",
-    "inputs": [{"name": "user", "type": "address"}],
-    "outputs": [{"name": "", "type": "uint256[]"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getBadge",
-    "inputs": [{"name": "tokenId", "type": "uint256"}],
-    "outputs": [{
-      "name": "",
-      "type": "tuple",
-      "components": [
-        {"name": "questId", "type": "uint256"},
-        {"name": "recipient", "type": "address"},
-        {"name": "tweetUrl", "type": "string"},
-        {"name": "mintTime", "type": "uint256"},
-        {"name": "questReward", "type": "uint256"},
-        {"name": "questTitle", "type": "string"},
-        {"name": "isValid", "type": "bool"}
-      ]
-    }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getUserBadgeCount",
-    "inputs": [{"name": "user", "type": "address"}],
-    "outputs": [{"name": "", "type": "uint256"}],
-    "stateMutability": "view"
-  }
-] as const;
-
-const ERC20_ABI = [
-  {
-    "type": "function",
-    "name": "approve",
-    "inputs": [
-      {"name": "spender", "type": "address"},
-      {"name": "amount", "type": "uint256"}
-    ],
-    "outputs": [{"name": "", "type": "bool"}],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "allowance",
-    "inputs": [
-      {"name": "owner", "type": "address"},
-      {"name": "spender", "type": "address"}
-    ],
-    "outputs": [{"name": "", "type": "uint256"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "balanceOf",
-    "inputs": [{"name": "account", "type": "address"}],
-    "outputs": [{"name": "", "type": "uint256"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "decimals",
-    "inputs": [],
-    "outputs": [{"name": "", "type": "uint8"}],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "symbol",
-    "inputs": [],
-    "outputs": [{"name": "", "type": "string"}],
-    "stateMutability": "view"
-  }
-] as const;
 
 // ============ Types ============
 export interface StakerInfo {
@@ -665,8 +501,15 @@ export function useQuestManager() {
           params: [submissionId]
         });
         
+        console.log(`📊 getSubmission(${submissionId}) raw result:`, {
+          result,
+          isArray: Array.isArray(result),
+          length: Array.isArray(result) ? result.length : 'not array',
+          type: typeof result
+        });
+        
         if (result && Array.isArray(result) && result.length >= 9) {
-          return {
+          const parsed = {
             questId: result[0] as bigint,
             player: result[1] as string,
             tweetUrl: result[2] as string,
@@ -677,8 +520,11 @@ export function useQuestManager() {
             nftTokenId: result[7] as bigint,
             rejectionReason: result[8] as string,
           };
+          console.log(`📊 getSubmission(${submissionId}) parsed:`, parsed);
+          return parsed;
         }
         
+        console.warn(`📊 getSubmission(${submissionId}) invalid result structure`);
         return null;
       } catch (error) {
         console.warn(`QuestManager.getSubmission(${submissionId}) attempt ${attempt}/${retries} failed:`, error);
