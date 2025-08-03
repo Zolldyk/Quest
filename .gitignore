@@ -10,6 +10,9 @@ out/
 # Docs
 docs/
 
+# Technical documentation (sensitive/internal)
+TECHNICAL_WHITEPAPER.md
+
 # Dotenv file
 .env
 .CLAUDE.md
