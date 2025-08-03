@@ -619,17 +619,13 @@ export function useStakingPool() {
     try {
       const tx = await stake([amount]);
       toast.success("Tokens staked successfully!");
-      
-      // Refetch data in background (don't await to avoid blocking)
-      Promise.all([refetchPoolBalance(), refetchPoolStats()]).catch(console.warn);
-      
       return tx;
     } catch (error: any) {
       console.error("Staking error:", error);
       toast.error(error?.message || "Failed to stake tokens");
       throw error;
     }
-  }, [contract, stake, refetchPoolBalance, refetchPoolStats, stakingPool]);
+  }, [contract, stake, stakingPool]);
 
   const unstakeTokens = useCallback(async (amount: bigint) => {
     if (!contract || !stakingPool) throw new Error("Contract not available or not configured");

@@ -103,10 +103,19 @@ export default function StakingInterface() {
         
         // Get allowance with error handling
         try {
-          console.log('Fetching allowance for:', { address, stakingPool: STAKING_POOL_ADDRESS });
+          console.log('Fetching allowance for:', { 
+            address, 
+            stakingPool: STAKING_POOL_ADDRESS,
+            stakingPoolLength: STAKING_POOL_ADDRESS.length 
+          });
           const allowance = await getAllowance(address, STAKING_POOL_ADDRESS);
-          if (allowance) currentAllowance = allowance;
-          console.log('Allowance fetched successfully:', allowance?.toString());
+          if (allowance !== null && allowance !== undefined) {
+            currentAllowance = allowance;
+          }
+          console.log('Allowance fetched successfully:', {
+            allowance: allowance?.toString(),
+            currentAllowance: currentAllowance.toString()
+          });
         } catch (error) {
           console.warn('Failed to fetch allowance:', error);
         }
@@ -187,28 +196,27 @@ export default function StakingInterface() {
     try {
       const amount = parseTokenAmount(stakeAmount, USDC_DECIMALS);
       
-      // Start approval transaction
-      const approvalPromise = approveSpender(STAKING_POOL_ADDRESS, amount);
+      // Wait for approval transaction to complete
+      await approveSpender(STAKING_POOL_ADDRESS, amount);
       
-      // Optimistically update UI state immediately
-      setAllowance(amount);
+      // Add small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Wait for transaction to complete
-      await approvalPromise;
+      // Refresh allowance after successful approval
+      const newAllowance = await getAllowance(address!, STAKING_POOL_ADDRESS);
+      setAllowance(newAllowance || BigInt(0));
       
-      // Show success feedback
+      console.log('Approval completed:', {
+        approvedAmount: amount.toString(),
+        newAllowance: newAllowance?.toString()
+      });
+      
+      // Show success feedback briefly
       setJustCompleted('approve');
-      setTimeout(() => setJustCompleted(null), 3000);
-      
-      // Verify allowance in background (don't wait for it)
-      getAllowance(address!, STAKING_POOL_ADDRESS)
-        .then(newAllowance => setAllowance(newAllowance || BigInt(0)))
-        .catch(console.warn);
+      setTimeout(() => setJustCompleted(null), 2000);
       
     } catch (error) {
       console.error('Approval failed:', error);
-      // Reset allowance on failure
-      setAllowance(BigInt(0));
     }
   };
 
@@ -218,37 +226,30 @@ export default function StakingInterface() {
     try {
       const amount = parseTokenAmount(stakeAmount, USDC_DECIMALS);
       
-      // Start staking transaction
-      const stakePromise = stakeTokens(amount);
+      // Execute staking transaction
+      await stakeTokens(amount);
       
-      // Optimistically update UI immediately
+      // Reset form after successful stake
       setStakeAmount('');
-      if (stats) {
-        const currentBalance = parseFloat(stats.userBalance);
-        const stakeAmountNum = parseFloat(stakeAmount);
-        setStats({
-          ...stats,
-          userBalance: (currentBalance - stakeAmountNum).toString(),
-          userStaked: (parseFloat(stats.userStaked) + stakeAmountNum).toString()
-        });
-      }
       
-      // Wait for transaction completion
-      await stakePromise;
-      
-      // Show success feedback
+      // Show success feedback briefly
       setJustCompleted('stake');
-      setTimeout(() => setJustCompleted(null), 3000);
+      setTimeout(() => setJustCompleted(null), 2000);
       
-      // Refresh data in background (don't await)
-      Promise.all([
-        refetchPoolBalance(),
-        refetchPoolStats()
-      ]).catch(console.warn);
+      // Add delay and refresh data after successful transaction
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      try {
+        await Promise.all([
+          refetchPoolBalance(),
+          refetchPoolStats()
+        ]);
+      } catch (error) {
+        console.warn('Failed to refresh data after staking:', error);
+      }
       
     } catch (error) {
       console.error('Staking failed:', error);
-      // Could restore original values here if needed
     }
   };
 
@@ -456,14 +457,26 @@ export default function StakingInterface() {
                     </div>
                   )}
 
-                  {/* Performance Tip */}
+                  {/* Status Information */}
                   {needsApproval && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                       <div className="flex items-start">
                         <InformationCircleIcon className="h-4 w-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
                         <div className="text-xs text-blue-800">
-                          <p className="font-medium">Two-step process:</p>
-                          <p>1. Approve spending → 2. Stake tokens. Each step requires wallet confirmation.</p>
+                          <p className="font-medium">Approval Required:</p>
+                          <p>You need to approve the contract to spend your USDC tokens first.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!needsApproval && stakeAmount && allowance > BigInt(0) && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                      <div className="flex items-start">
+                        <CheckCircleIcon className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                        <div className="text-xs text-green-800">
+                          <p className="font-medium">Ready to Stake:</p>
+                          <p>Your approval is sufficient. You can now stake your tokens.</p>
                         </div>
                       </div>
                     </div>
