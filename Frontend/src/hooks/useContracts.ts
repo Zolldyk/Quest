@@ -620,8 +620,8 @@ export function useStakingPool() {
       const tx = await stake([amount]);
       toast.success("Tokens staked successfully!");
       
-      // Refetch data
-      await Promise.all([refetchPoolBalance(), refetchPoolStats()]);
+      // Refetch data in background (don't await to avoid blocking)
+      Promise.all([refetchPoolBalance(), refetchPoolStats()]).catch(console.warn);
       
       return tx;
     } catch (error: any) {

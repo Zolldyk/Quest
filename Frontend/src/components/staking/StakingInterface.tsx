@@ -61,6 +61,7 @@ export default function StakingInterface() {
   const [allowance, setAllowance] = useState<bigint>(BigInt(0));
   const [needsApproval, setNeedsApproval] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [justCompleted, setJustCompleted] = useState<'approve' | 'stake' | null>(null);
 
   // ============ Constants ============
   const STAKING_POOL_ADDRESS = process.env.NEXT_PUBLIC_STAKING_POOL_ADDRESS!.trim();
@@ -185,14 +186,29 @@ export default function StakingInterface() {
     
     try {
       const amount = parseTokenAmount(stakeAmount, USDC_DECIMALS);
-      await approveSpender(STAKING_POOL_ADDRESS, amount);
       
-      // Refresh allowance
-      const newAllowance = await getAllowance(address!, STAKING_POOL_ADDRESS);
-      setAllowance(newAllowance || BigInt(0));
+      // Start approval transaction
+      const approvalPromise = approveSpender(STAKING_POOL_ADDRESS, amount);
+      
+      // Optimistically update UI state immediately
+      setAllowance(amount);
+      
+      // Wait for transaction to complete
+      await approvalPromise;
+      
+      // Show success feedback
+      setJustCompleted('approve');
+      setTimeout(() => setJustCompleted(null), 3000);
+      
+      // Verify allowance in background (don't wait for it)
+      getAllowance(address!, STAKING_POOL_ADDRESS)
+        .then(newAllowance => setAllowance(newAllowance || BigInt(0)))
+        .catch(console.warn);
       
     } catch (error) {
       console.error('Approval failed:', error);
+      // Reset allowance on failure
+      setAllowance(BigInt(0));
     }
   };
 
@@ -201,17 +217,38 @@ export default function StakingInterface() {
     
     try {
       const amount = parseTokenAmount(stakeAmount, USDC_DECIMALS);
-      await stakeTokens(amount);
       
-      // Reset form and refresh data
+      // Start staking transaction
+      const stakePromise = stakeTokens(amount);
+      
+      // Optimistically update UI immediately
       setStakeAmount('');
-      await Promise.all([
+      if (stats) {
+        const currentBalance = parseFloat(stats.userBalance);
+        const stakeAmountNum = parseFloat(stakeAmount);
+        setStats({
+          ...stats,
+          userBalance: (currentBalance - stakeAmountNum).toString(),
+          userStaked: (parseFloat(stats.userStaked) + stakeAmountNum).toString()
+        });
+      }
+      
+      // Wait for transaction completion
+      await stakePromise;
+      
+      // Show success feedback
+      setJustCompleted('stake');
+      setTimeout(() => setJustCompleted(null), 3000);
+      
+      // Refresh data in background (don't await)
+      Promise.all([
         refetchPoolBalance(),
         refetchPoolStats()
-      ]);
+      ]).catch(console.warn);
       
     } catch (error) {
       console.error('Staking failed:', error);
+      // Could restore original values here if needed
     }
   };
 
@@ -419,6 +456,19 @@ export default function StakingInterface() {
                     </div>
                   )}
 
+                  {/* Performance Tip */}
+                  {needsApproval && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                      <div className="flex items-start">
+                        <InformationCircleIcon className="h-4 w-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+                        <div className="text-xs text-blue-800">
+                          <p className="font-medium">Two-step process:</p>
+                          <p>1. Approve spending → 2. Stake tokens. Each step requires wallet confirmation.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Action Buttons */}
                   <div className="space-y-3">
                     {needsApproval && (
@@ -430,7 +480,12 @@ export default function StakingInterface() {
                         {isApproving ? (
                           <>
                             <LoadingSpinner size="sm" className="mr-2" />
-                            Approving...
+                            Processing Transaction...
+                          </>
+                        ) : justCompleted === 'approve' ? (
+                          <>
+                            <CheckCircleIcon className="h-4 w-4 mr-2" />
+                            Approved Successfully!
                           </>
                         ) : (
                           `Approve ${stakeAmount} USDC`
@@ -446,7 +501,12 @@ export default function StakingInterface() {
                       {isStaking ? (
                         <>
                           <LoadingSpinner size="sm" className="mr-2" />
-                          Staking...
+                          Processing Transaction...
+                        </>
+                      ) : justCompleted === 'stake' ? (
+                        <>
+                          <CheckCircleIcon className="h-4 w-4 mr-2" />
+                          Staked Successfully!
                         </>
                       ) : (
                         <>
