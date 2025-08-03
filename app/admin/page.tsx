@@ -18,18 +18,16 @@ import QuestManagement from '../../Frontend/src/components/admin/QuestManagement
 import PoolStats from '../../Frontend/src/components/stats/PoolStats';
 import WalletConnectionV5 from '../../Frontend/src/components/wallet/WalletConnectionV5';
 import { useAddress } from '../../Frontend/src/hooks/useThirdwebV5';
-import { useContracts } from '../../Frontend/src/hooks/useContracts';
 
 // Admin addresses - should be set via environment variables
 const ADMIN_ADDRESSES = [
-  process.env.NEXT_PUBLIC_ADMIN_ADDRESS?.toLowerCase(),
+  process.env.NEXT_PUBLIC_ADMIN_ADDRESS?.toLowerCase().trim(),
   // Add more admin addresses here
 ].filter(Boolean);
 
 export default function AdminPage() {
   // ============ Hooks ============
   const address = useAddress();
-  const { questManager } = useContracts();
 
   // ============ State ============
   const [isAdmin, setIsAdmin] = useState(false);
@@ -47,34 +45,27 @@ export default function AdminPage() {
         return;
       }
 
-      // Check if address is in hardcoded admin list
-      const isHardcodedAdmin = ADMIN_ADDRESSES.includes(address.toLowerCase());
+      // Check if address is in hardcoded admin list first (most reliable)
+      const isHardcodedAdmin = ADMIN_ADDRESSES.includes(address.toLowerCase().trim());
 
       if (isHardcodedAdmin) {
+        console.log('Admin access granted via hardcoded list');
         setIsAdmin(true);
         setIsCheckingAccess(false);
         return;
       }
 
-      // Check on-chain admin status if contract is available
-      if (questManager.contract) {
-        try {
-          const isContractAdmin = await questManager.checkIsAdmin(address);
-          setIsAdmin(isContractAdmin);
-        } catch (err) {
-          console.error('Error checking contract admin status:', err);
-          setIsAdmin(false);
-        }
-      } else {
-        setIsAdmin(false);
-      }
+      // If not in hardcoded list, set as false for now
+      // We can add on-chain checking later if needed
+      console.log('Address not in admin list:', address);
+      setIsAdmin(false);
     } catch (err) {
       console.error('Error checking admin access:', err);
       setIsAdmin(false);
     } finally {
       setIsCheckingAccess(false);
     }
-  }, [address, questManager]);
+  }, [address]); // Removed questManager dependency to prevent infinite loops
 
   // ============ Effects ============
   useEffect(() => {

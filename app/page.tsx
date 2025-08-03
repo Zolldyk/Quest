@@ -22,7 +22,12 @@ export default function HomePage() {
   // Debug: Log wallet address and admin address for troubleshooting
   console.log('Current address:', address);
   console.log('Admin address:', process.env.NEXT_PUBLIC_ADMIN_ADDRESS);
-  console.log('Addresses match:', address && address.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_ADDRESS?.toLowerCase());
+  console.log('Current trimmed/lower:', address?.toLowerCase().trim());
+  console.log('Admin trimmed/lower:', process.env.NEXT_PUBLIC_ADMIN_ADDRESS?.toLowerCase().trim());
+  
+  const isAdmin = address && process.env.NEXT_PUBLIC_ADMIN_ADDRESS && 
+    address.toLowerCase().trim() === process.env.NEXT_PUBLIC_ADMIN_ADDRESS.toLowerCase().trim();
+  console.log('Addresses match:', isAdmin);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -57,7 +62,7 @@ export default function HomePage() {
                     Quests
                   </Link>
                   {/* Show admin link if user is admin */}
-                  {address && address.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_ADDRESS?.toLowerCase() && (
+                  {isAdmin && (
                     <Link href="/admin" className="text-purple-700 hover:text-purple-600 font-medium">
                       Admin
                     </Link>
