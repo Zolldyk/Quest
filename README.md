@@ -1,6 +1,6 @@
 # Quest DApp 🏆
 
-**A DeFi-Powered NFT Quest Gaming Platform Built on Etherlink**
+**A DeFi-Powered NFT Quest Gamified Platform Built on Etherlink**
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen)](https://quest-dapp-kappa.vercel.app)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -10,7 +10,7 @@
 
 ## 🌟 Project Overview
 
-Quest DApp is an innovative platform that combines **decentralized finance (DeFi)** with **gamified social engagement**. Users can stake USDC tokens, complete social media quests, earn rewards, and mint unique NFT badges as proof of achievement—all powered by Web3 infrastructure.
+Quest DApp is an innovative platform that combines **decentralized finance (DeFi)** with **gamified social engagement**. Users can stake USDC tokens, complete social media quests, earn rewards, and mint unique NFT badges as proof of achievement—all powered by Web3 infrastructure. (DeFi Application, On-Chain Interactive Experience, Collab Culture)
 
 ### 🎯 Key Features
 
