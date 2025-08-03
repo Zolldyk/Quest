@@ -19,6 +19,11 @@ import { useAddress } from '../Frontend/src/hooks/useThirdwebV5';
 export default function HomePage() {
   const address = useAddress();
 
+  // Debug: Log wallet address and admin address for troubleshooting
+  console.log('Current address:', address);
+  console.log('Admin address:', process.env.NEXT_PUBLIC_ADMIN_ADDRESS);
+  console.log('Addresses match:', address && address.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_ADDRESS?.toLowerCase());
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       
@@ -52,7 +57,7 @@ export default function HomePage() {
                     Quests
                   </Link>
                   {/* Show admin link if user is admin */}
-                  {address === process.env.NEXT_PUBLIC_ADMIN_ADDRESS && (
+                  {address && address.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_ADDRESS?.toLowerCase() && (
                     <Link href="/admin" className="text-purple-700 hover:text-purple-600 font-medium">
                       Admin
                     </Link>

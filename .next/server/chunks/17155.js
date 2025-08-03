@@ -1,0 +1,1 @@
+"use strict";exports.id=17155,exports.ids=[17155],exports.modules={17155:(a,b,c)=>{c.r(b),c.d(b,{default:()=>d});let d={connecting:"Подключение к смарт-аккаунту",failedToConnect:"Не удалось подключиться к смарт-аккаунту",wrongNetworkScreen:{failedToSwitch:"Не удалось сменить сеть",subtitle:"Ваш кошелек не подключен к нужной сети",title:"Неверная сеть"}}}};

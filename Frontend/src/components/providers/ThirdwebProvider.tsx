@@ -62,6 +62,14 @@ const getActiveChain = () => {
 
 
 
+// Import required Thirdweb client
+import { createThirdwebClient } from 'thirdweb';
+
+// Create client
+const client = createThirdwebClient({
+  clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || 'your-client-id-here'
+});
+
 /**
  * @title CustomThirdwebProvider  
  * @notice Wrapper around ThirdwebProvider with Etherlink configuration
