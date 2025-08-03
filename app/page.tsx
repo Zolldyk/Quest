@@ -51,6 +51,12 @@ export default function HomePage() {
                   <Link href="/quests" className="text-gray-700 hover:text-blue-600 font-medium">
                     Quests
                   </Link>
+                  {/* Show admin link if user is admin */}
+                  {address === process.env.NEXT_PUBLIC_ADMIN_ADDRESS && (
+                    <Link href="/admin" className="text-purple-700 hover:text-purple-600 font-medium">
+                      Admin
+                    </Link>
+                  )}
                 </>
               )}
             </nav>
